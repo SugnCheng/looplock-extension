@@ -32,6 +32,27 @@ function setThemeButtons(themeMode: ThemeMode): void {
   lightBtn?.classList.toggle("active", themeMode === "light");
 }
 
+function setBadgeState(
+  label: string,
+  variant: "active" | "inactive" | "error"
+): void {
+  const badge = document.getElementById("top-status-badge");
+  if (!badge) return;
+
+  badge.textContent = label;
+  badge.classList.remove("active", "inactive", "error");
+  badge.classList.add(variant);
+}
+
+function setHeroCopy(title: string, subtitle: string): void {
+  setText("hero-title", title);
+  setText("hero-subtitle", subtitle);
+}
+
+function setTipText(value: string): void {
+  setText("popup-tip", value);
+}
+
 function setOpenButtonState(status: PopupStatusResponse | null, supported: boolean): void {
   const btn = document.getElementById("open-looplock-btn") as HTMLButtonElement | null;
   if (!btn) return;
@@ -46,6 +67,11 @@ function setOpenButtonState(status: PopupStatusResponse | null, supported: boole
 
   if (status?.looplockEnabled && status?.panelVisible) {
     btn.textContent = "LoopLock Active";
+    return;
+  }
+
+  if (status?.looplockEnabled && !status?.panelVisible) {
+    btn.textContent = "Show Panel";
     return;
   }
 
@@ -64,33 +90,92 @@ async function sendMessageToActiveTab(message: ContentMessage): Promise<PopupSta
   }
 }
 
+function renderUnsupportedState(): void {
+  setText("site-status", "Unsupported page");
+  setText("enabled-status", "N/A");
+  setText("panel-status", "N/A");
+  setText("media-status", "N/A");
+  setHeroCopy(
+    "Open a YouTube watch page first.",
+    "LoopLock currently focuses on YouTube watch pages for its MVP experience."
+  );
+  setTipText("Go to a YouTube video page, then reopen the popup to launch LoopLock.");
+  setBadgeState("Unsupported", "error");
+  applyPopupTheme("dark");
+  setThemeButtons("dark");
+  setOpenButtonState(null, false);
+}
+
+function renderUnavailableState(): void {
+  setText("site-status", "YouTube detected");
+  setText("enabled-status", "Unavailable");
+  setText("panel-status", "Unavailable");
+  setText("media-status", "Unavailable");
+  setHeroCopy(
+    "LoopLock is available on this page.",
+    "The content script did not respond, so status details are temporarily unavailable."
+  );
+  setTipText("Try reopening the popup or refreshing the page if the status stays unavailable.");
+  setBadgeState("Ready", "inactive");
+  applyPopupTheme("dark");
+  setThemeButtons("dark");
+  setOpenButtonState(null, true);
+}
+
+function renderSupportedState(status: PopupStatusResponse): void {
+  setText("site-status", status.supported ? "YouTube detected" : "Unsupported page");
+  setText("enabled-status", status.looplockEnabled ? "Enabled" : "Disabled");
+  setText("panel-status", status.panelVisible ? "Visible" : "Hidden");
+  setText("media-status", status.mediaDetected ? "Detected" : "Not detected");
+
+  applyPopupTheme(status.themeMode);
+  setThemeButtons(status.themeMode);
+  setOpenButtonState(status, true);
+
+  if (status.looplockEnabled && status.panelVisible) {
+    setBadgeState("Active", "active");
+    setHeroCopy(
+      "LoopLock is active on this tab.",
+      status.mediaDetected
+        ? "Use the floating panel to set A/B points, loop playback, or exit with ✕."
+        : "LoopLock is open, but media has not been detected yet on this page."
+    );
+    setTipText("Tip: drag the panel to your preferred spot — its position now stays saved.");
+    return;
+  }
+
+  if (status.looplockEnabled && !status.panelVisible) {
+    setBadgeState("Enabled", "inactive");
+    setHeroCopy(
+      "LoopLock is enabled, but the panel is hidden.",
+      "Use the button below to show the floating panel again on this video page."
+    );
+    setTipText("Your loop session remains available until you exit from the floating panel.");
+    return;
+  }
+
+  setBadgeState("Ready", "inactive");
+  setHeroCopy(
+    "This page is ready for LoopLock.",
+    status.mediaDetected
+      ? "Open LoopLock to start setting A/B points for the current video."
+      : "Open LoopLock now, and media detection will continue as the page finishes loading."
+  );
+  setTipText("LoopLock starts only when you choose to open it from the popup.");
+}
+
 function renderStatus(status: PopupStatusResponse | null, tabSupported: boolean): void {
   if (!tabSupported) {
-    setText("site-status", "Unsupported page");
-    setText("enabled-status", "N/A");
-    setText("panel-status", "N/A");
-    applyPopupTheme("dark");
-    setThemeButtons("dark");
-    setOpenButtonState(null, false);
+    renderUnsupportedState();
     return;
   }
 
   if (!status) {
-    setText("site-status", "YouTube detected");
-    setText("enabled-status", "Unavailable");
-    setText("panel-status", "Unavailable");
-    applyPopupTheme("dark");
-    setThemeButtons("dark");
-    setOpenButtonState(null, true);
+    renderUnavailableState();
     return;
   }
 
-  setText("site-status", status.supported ? "YouTube detected" : "Unsupported page");
-  setText("enabled-status", status.looplockEnabled ? "Enabled" : "Disabled");
-  setText("panel-status", status.panelVisible ? "Visible" : "Hidden");
-  applyPopupTheme(status.themeMode);
-  setThemeButtons(status.themeMode);
-  setOpenButtonState(status, true);
+  renderSupportedState(status);
 }
 
 async function refreshStatus(): Promise<void> {
@@ -107,12 +192,22 @@ async function refreshStatus(): Promise<void> {
 }
 
 async function runAction(message: ContentMessage): Promise<void> {
-  await sendMessageToActiveTab(message);
-  await refreshStatus();
+  const status = await sendMessageToActiveTab(message);
+  const tab = await getActiveTab();
+  const supported = isSupportedUrl(tab?.url);
+  renderStatus(status, supported);
 }
 
 function bindEvents(): void {
   document.getElementById("open-looplock-btn")?.addEventListener("click", async () => {
+    const currentButtonText =
+      (document.getElementById("open-looplock-btn") as HTMLButtonElement | null)?.textContent ?? "";
+
+    if (currentButtonText === "Show Panel") {
+      await runAction({ type: "SHOW_PANEL" });
+      return;
+    }
+
     await runAction({ type: "OPEN_LOOPLOCK" });
   });
 

@@ -1,8 +1,10 @@
 import { EXTENSION_ROOT_ID } from "../shared/constants";
-import type { PanelState, ThemeMode } from "../shared/types";
+import type { PanelState, ThemeMode, PanelPosition } from "../shared/types";
 import { formatTime } from "./time-utils";
 
 interface PanelHandlers {
+  getInitialPosition: () => PanelPosition | null | undefined;
+  onPositionChange: (position: PanelPosition) => void | Promise<void>;
   onSetStart: () => void;
   onSetEnd: () => void;
   onToggleLoop: () => void;
@@ -59,7 +61,7 @@ export class FloatingPanel {
 
     if (!this.hasInitializedPosition) {
       requestAnimationFrame(() => {
-        this.setInitialPosition();
+        this.initializePosition();
         this.hasInitializedPosition = true;
       });
     }
@@ -72,7 +74,7 @@ export class FloatingPanel {
     this.render();
 
     if (this.hasInitializedPosition) {
-      this.clampToViewport();
+      this.clampToViewport(false);
     }
   }
 
@@ -82,7 +84,7 @@ export class FloatingPanel {
   }
 
   private createRoot(): HTMLDivElement {
-    let existing = document.getElementById(EXTENSION_ROOT_ID) as HTMLDivElement | null;
+    const existing = document.getElementById(EXTENSION_ROOT_ID) as HTMLDivElement | null;
     if (existing) return existing;
 
     const el = document.createElement("div");
@@ -272,21 +274,49 @@ export class FloatingPanel {
     const nextLeft = Math.min(Math.max(this.dragStartLeft + dx, minLeft), maxLeft);
     const nextTop = Math.min(Math.max(this.dragStartTop + dy, minTop), maxTop);
 
-    this.root.style.left = `${nextLeft}px`;
-    this.root.style.top = `${nextTop}px`;
-    this.root.style.right = "auto";
-    this.root.style.bottom = "auto";
+    this.applyPosition({ left: nextLeft, top: nextTop });
   };
 
   private handleDragEnd = (): void => {
+    if (this.isDragging) {
+      void this.handlers.onPositionChange(this.getCurrentPosition());
+    }
+
     this.isDragging = false;
     document.removeEventListener("mousemove", this.handleDragMove);
     document.removeEventListener("mouseup", this.handleDragEnd);
   };
 
   private handleWindowResize = (): void => {
-    this.clampToViewport();
+    this.clampToViewport(true);
   };
+
+  private initializePosition(): void {
+    const savedPosition = this.handlers.getInitialPosition();
+
+    if (savedPosition) {
+      this.applyPosition(savedPosition);
+      this.clampToViewport(false);
+      return;
+    }
+
+    this.setInitialPosition();
+  }
+
+  private applyPosition(position: PanelPosition): void {
+    this.root.style.left = `${position.left}px`;
+    this.root.style.top = `${position.top}px`;
+    this.root.style.right = "auto";
+    this.root.style.bottom = "auto";
+  }
+
+  private getCurrentPosition(): PanelPosition {
+    const rect = this.panelEl.getBoundingClientRect();
+    return {
+      left: rect.left,
+      top: rect.top
+    };
+  }
 
   private setInitialPosition(): void {
     const panelWidth = this.panelEl.offsetWidth || 224;
@@ -296,13 +326,10 @@ export class FloatingPanel {
     const left = Math.max(margin, window.innerWidth - panelWidth - margin);
     const top = Math.max(margin, window.innerHeight - panelHeight - margin);
 
-    this.root.style.left = `${left}px`;
-    this.root.style.top = `${top}px`;
-    this.root.style.right = "auto";
-    this.root.style.bottom = "auto";
+    this.applyPosition({ left, top });
   }
 
-  private clampToViewport(): void {
+  private clampToViewport(emitPositionChange: boolean): void {
     const rect = this.panelEl.getBoundingClientRect();
     const panelWidth = this.panelEl.offsetWidth;
     const panelHeight = this.panelEl.offsetHeight;
@@ -319,10 +346,19 @@ export class FloatingPanel {
     if (nextLeft > maxLeft) nextLeft = maxLeft;
     if (nextTop > maxTop) nextTop = maxTop;
 
-    this.root.style.left = `${nextLeft}px`;
-    this.root.style.top = `${nextTop}px`;
-    this.root.style.right = "auto";
-    this.root.style.bottom = "auto";
+    const changed = nextLeft !== rect.left || nextTop !== rect.top;
+
+    this.applyPosition({
+      left: nextLeft,
+      top: nextTop
+    });
+
+    if (changed && emitPositionChange) {
+      void this.handlers.onPositionChange({
+        left: nextLeft,
+        top: nextTop
+      });
+    }
   }
 
   private render(): void {

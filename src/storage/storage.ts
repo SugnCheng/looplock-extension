@@ -1,11 +1,12 @@
 import {
   UI_COLLAPSE_STORAGE_KEY,
+  UI_PANEL_POSITION_STORAGE_KEY,
   LOOPLOCK_ENABLED_KEY,
   FLOATING_PANEL_VISIBLE_KEY,
   LOOPLOCK_THEME_KEY
 } from "../shared/constants";
 import { logger } from "../shared/logger";
-import type { ThemeMode } from "../shared/types";
+import type { ThemeMode, PanelPosition } from "../shared/types";
 
 function isExtensionContextInvalidatedError(error: unknown): boolean {
   return error instanceof Error && error.message.includes("Extension context invalidated");
@@ -45,6 +46,28 @@ export async function saveCollapsedState(collapsed: boolean): Promise<void> {
 export async function loadCollapsedState(): Promise<boolean> {
   const value = await safeGet<boolean>(UI_COLLAPSE_STORAGE_KEY);
   return Boolean(value);
+}
+
+export async function savePanelPosition(position: PanelPosition): Promise<void> {
+  await safeSet({
+    [UI_PANEL_POSITION_STORAGE_KEY]: position
+  });
+}
+
+export async function loadPanelPosition(): Promise<PanelPosition | null> {
+  const value = await safeGet<PanelPosition>(UI_PANEL_POSITION_STORAGE_KEY);
+
+  if (
+    value &&
+    typeof value.left === "number" &&
+    Number.isFinite(value.left) &&
+    typeof value.top === "number" &&
+    Number.isFinite(value.top)
+  ) {
+    return value;
+  }
+
+  return null;
 }
 
 export async function saveLooplockEnabled(enabled: boolean): Promise<void> {

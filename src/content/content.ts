@@ -11,13 +11,16 @@ import {
   loadPanelVisible,
   savePanelVisible,
   loadThemeMode,
-  saveThemeMode
+  saveThemeMode,
+  loadPanelPosition,
+  savePanelPosition
 } from "../storage/storage";
 import { logger } from "../shared/logger";
 import type {
   PopupStatusResponse,
   ContentMessage,
-  ThemeMode
+  ThemeMode,
+  PanelPosition
 } from "../shared/types";
 import { observeDomChanges } from "./dom-observer";
 import { isYouTubePage } from "./site-adapters/youtube";
@@ -44,6 +47,16 @@ const loopController = new LoopController(({ range, errorMessage, currentTime })
 });
 
 const panel = new FloatingPanel(runtime.panelState, {
+  getInitialPosition: () => runtime.panelPosition,
+  onPositionChange: async (position) => {
+    runtime.panelPosition = position;
+
+    try {
+      await savePanelPosition(position);
+    } catch (error) {
+      logger.warn("Failed to save panel position:", error);
+    }
+  },
   onSetStart: () => {
     if (!runtime.looplockEnabled) return;
     loopController.setStartFromCurrentTime();
@@ -267,6 +280,7 @@ async function initialize(): Promise<void> {
     runtime.looplockEnabled = await loadLooplockEnabled();
     runtime.floatingPanelVisible = await loadPanelVisible();
     runtime.themeMode = await loadThemeMode();
+    runtime.panelPosition = await loadPanelPosition();
 
     if (!runtime.looplockEnabled) {
       runtime.floatingPanelVisible = false;

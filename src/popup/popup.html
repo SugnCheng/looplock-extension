@@ -11,8 +11,20 @@
       <div class="popup-shell">
         <div class="popup-header">
           <div class="popup-brand">
-            <div class="popup-title">LoopLock</div>
+            <div class="popup-title-row">
+              <div class="popup-title">LoopLock</div>
+              <div class="popup-badge" id="top-status-badge">Checking</div>
+            </div>
             <div class="popup-subtitle">YouTube A-B Loop Controller</div>
+          </div>
+        </div>
+
+        <div class="popup-hero-card">
+          <div class="popup-hero-copy">
+            <div class="popup-hero-title" id="hero-title">Checking current page…</div>
+            <div class="popup-hero-subtitle" id="hero-subtitle">
+              Detecting LoopLock status and media availability.
+            </div>
           </div>
         </div>
 
@@ -28,6 +40,10 @@
           <div class="status-row">
             <span class="status-label">Panel</span>
             <span class="status-value" id="panel-status">Checking...</span>
+          </div>
+          <div class="status-row">
+            <span class="status-label">Media</span>
+            <span class="status-value" id="media-status">Checking...</span>
           </div>
         </div>
 
@@ -45,7 +61,7 @@
           </button>
         </div>
 
-        <div class="popup-tip">
+        <div class="popup-tip" id="popup-tip">
           Use the floating panel to set A/B, control loop playback, and exit with ✕.
         </div>
       </div>

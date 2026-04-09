@@ -1,4 +1,4 @@
-import type { PanelState, ThemeMode } from "../shared/types";
+import type { PanelState, ThemeMode, PanelPosition } from "../shared/types";
 import { isYouTubePage } from "./site-adapters/youtube";
 
 export interface ContentRuntimeState {
@@ -9,6 +9,7 @@ export interface ContentRuntimeState {
   floatingPanelVisible: boolean;
   themeMode: ThemeMode;
   panelState: PanelState;
+  panelPosition: PanelPosition | null;
 }
 
 export function createInitialPanelState(): PanelState {
@@ -32,7 +33,8 @@ export function createRuntimeState(initialPageKey: string): ContentRuntimeState 
     looplockEnabled: false,
     floatingPanelVisible: false,
     themeMode: "dark",
-    panelState: createInitialPanelState()
+    panelPosition: null,
+    panelState: createInitialPanelState(),
   };
 }
 

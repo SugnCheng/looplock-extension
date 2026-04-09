@@ -4,6 +4,11 @@ export interface LoopRange {
   enabled: boolean;
 }
 
+export interface PanelPosition {
+  left: number;
+  top: number;
+}
+
 export interface PanelState extends LoopRange {
   mediaDetected: boolean;
   currentTime: number;
