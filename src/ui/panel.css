@@ -1,112 +1,283 @@
 #looplock-root {
   position: fixed;
-  right: 16px;
-  bottom: 16px;
+  left: 0;
+  top: 0;
   z-index: 2147483647;
   font-family: Arial, sans-serif;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+
+  --ll-bg-main: rgba(18, 21, 28, 0.94);
+  --ll-bg-panel-accent: rgba(98, 114, 255, 0.12);
+  --ll-border: rgba(255, 255, 255, 0.1);
+  --ll-header-bg-top: rgba(255, 255, 255, 0.08);
+  --ll-header-bg-bottom: rgba(255, 255, 255, 0.04);
+  --ll-text-main: #ffffff;
+  --ll-text-sub: #b7bfd0;
+  --ll-card-bg: rgba(255, 255, 255, 0.045);
+  --ll-card-border: rgba(255, 255, 255, 0.04);
+  --ll-card-hover-bg: rgba(255, 255, 255, 0.06);
+  --ll-card-hover-border: rgba(255, 255, 255, 0.07);
+  --ll-now-bg: rgba(105, 121, 255, 0.12);
+  --ll-now-border: rgba(105, 121, 255, 0.2);
+  --ll-btn-bg: rgba(255, 255, 255, 0.08);
+  --ll-btn-hover-bg: rgba(255, 255, 255, 0.14);
+  --ll-status-ok-bg: rgba(46, 204, 113, 0.18);
+  --ll-status-ok-text: #8cffbe;
+  --ll-status-off-bg: rgba(231, 76, 60, 0.18);
+  --ll-status-off-text: #ffaea4;
+  --ll-error-bg: rgba(231, 76, 60, 0.18);
+  --ll-error-text: #ffb9af;
+}
+
+#looplock-root[data-theme="light"] {
+  --ll-bg-main: rgba(247, 249, 252, 0.96);
+  --ll-bg-panel-accent: rgba(90, 109, 255, 0.08);
+  --ll-border: rgba(25, 34, 48, 0.08);
+  --ll-header-bg-top: rgba(25, 34, 48, 0.05);
+  --ll-header-bg-bottom: rgba(25, 34, 48, 0.02);
+  --ll-text-main: #1d2430;
+  --ll-text-sub: #667085;
+  --ll-card-bg: rgba(25, 34, 48, 0.03);
+  --ll-card-border: rgba(25, 34, 48, 0.05);
+  --ll-card-hover-bg: rgba(25, 34, 48, 0.05);
+  --ll-card-hover-border: rgba(25, 34, 48, 0.08);
+  --ll-now-bg: rgba(105, 121, 255, 0.10);
+  --ll-now-border: rgba(105, 121, 255, 0.18);
+  --ll-btn-bg: rgba(25, 34, 48, 0.06);
+  --ll-btn-hover-bg: rgba(25, 34, 48, 0.1);
+  --ll-status-ok-bg: rgba(46, 204, 113, 0.15);
+  --ll-status-ok-text: #13884b;
+  --ll-status-off-bg: rgba(231, 76, 60, 0.14);
+  --ll-status-off-text: #b9382c;
+  --ll-error-bg: rgba(231, 76, 60, 0.12);
+  --ll-error-text: #b9382c;
 }
 
 .looplock-panel {
-  width: 240px;
-  background: rgba(24, 24, 28, 0.92);
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+  width: 224px;
+  min-height: 0;
+  background:
+    radial-gradient(circle at top left, var(--ll-bg-panel-accent), transparent 38%),
+    var(--ll-bg-main);
+  color: var(--ll-text-main);
+  border: 1px solid var(--ll-border);
+  border-radius: 16px;
+  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.22);
   padding: 12px;
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(10px);
+  transition:
+    box-shadow 0.18s ease,
+    transform 0.18s ease,
+    background 0.18s ease,
+    color 0.18s ease,
+    border-color 0.18s ease;
+  overflow: hidden;
+  position: relative;
+}
+
+.looplock-panel:hover {
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.26);
 }
 
 .looplock-panel.collapsed {
-  width: 220px;
+  width: 208px;
 }
 
 .looplock-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
+  margin: -12px -12px 10px -12px;
+  padding: 10px 12px;
+  background:
+    linear-gradient(180deg, var(--ll-header-bg-top), var(--ll-header-bg-bottom));
+  border-bottom: 1px solid var(--ll-border);
+  border-radius: 16px 16px 0 0;
 }
 
-.looplock-header-right {
+.looplock-drag-handle {
+  cursor: move;
+  user-select: none;
+}
+
+.looplock-drag-handle:hover {
+  filter: brightness(1.03);
+}
+
+.looplock-title-wrap {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .looplock-title {
   font-weight: 700;
   font-size: 14px;
+  letter-spacing: 0.2px;
+}
+
+.looplock-drag-hint {
+  font-size: 10px;
+  color: var(--ll-text-sub);
+  letter-spacing: 0.2px;
+}
+
+.looplock-header-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .looplock-status {
-  font-size: 11px;
-  padding: 2px 6px;
+  font-size: 10px;
+  padding: 3px 7px;
   border-radius: 999px;
+  font-weight: 700;
+  transition: all 0.18s ease;
 }
 
 .looplock-status.ok {
-  background: rgba(46, 204, 113, 0.2);
-  color: #7dffb0;
+  background: var(--ll-status-ok-bg);
+  color: var(--ll-status-ok-text);
 }
 
 .looplock-status.off {
-  background: rgba(231, 76, 60, 0.2);
-  color: #ff9f91;
+  background: var(--ll-status-off-bg);
+  color: var(--ll-status-off-text);
 }
 
-.looplock-collapse-btn {
-  width: 24px;
-  height: 24px;
+.looplock-collapse-btn,
+.looplock-close-btn {
+  width: 23px;
+  height: 23px;
   border: none;
-  border-radius: 6px;
-  background: #2d2f38;
-  color: white;
+  border-radius: 7px;
+  background: var(--ll-btn-bg);
+  color: var(--ll-text-main);
   cursor: pointer;
+  transition: background 0.15s ease, transform 0.12s ease;
 }
 
-.looplock-collapse-btn:hover {
-  background: #3a3d48;
+.looplock-collapse-btn:hover,
+.looplock-close-btn:hover {
+  background: var(--ll-btn-hover-bg);
 }
 
-.looplock-now {
-  margin-bottom: 8px;
-  font-size: 13px;
+.looplock-collapse-btn:active,
+.looplock-close-btn:active {
+  transform: scale(0.96);
 }
 
-.looplock-times {
+.looplock-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.looplock-metrics-grid {
   display: grid;
-  gap: 4px;
-  margin-bottom: 10px;
-  font-size: 13px;
+  gap: 6px;
+}
+
+.looplock-metric-card {
+  padding: 8px 10px;
+  border-radius: 11px;
+  background: var(--ll-card-bg);
+  border: 1px solid var(--ll-card-border);
+  transition: background 0.18s ease, border-color 0.18s ease;
+  text-align: center;
+}
+
+.looplock-metric-card:hover {
+  background: var(--ll-card-hover-bg);
+  border-color: var(--ll-card-hover-border);
+}
+
+.looplock-now-card {
+  background: var(--ll-now-bg);
+  border-color: var(--ll-now-border);
+}
+
+.looplock-metric-label {
+  font-size: 10px;
+  color: var(--ll-text-sub);
+  margin-bottom: 4px;
+  letter-spacing: 0.2px;
+}
+
+.looplock-metric-value {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ll-text-main);
 }
 
 .looplock-error {
-  margin-bottom: 10px;
-  padding: 8px;
-  border-radius: 8px;
-  background: rgba(231, 76, 60, 0.18);
-  color: #ffb3a9;
-  font-size: 12px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--ll-error-bg);
+  color: var(--ll-error-text);
+  font-size: 11px;
   line-height: 1.4;
+  animation: looplockFadeIn 0.18s ease;
 }
 
 .looplock-actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  gap: 7px;
+  margin-top: 2px;
 }
 
-.looplock-actions button {
+.looplock-action-btn {
   border: none;
-  border-radius: 8px;
-  padding: 8px 10px;
+  border-radius: 10px;
+  padding: 9px 9px;
   cursor: pointer;
-  background: #2d2f38;
-  color: #fff;
+  background: var(--ll-btn-bg);
+  color: var(--ll-text-main);
   font-size: 12px;
+  font-weight: 700;
+  transition:
+    background 0.15s ease,
+    transform 0.12s ease,
+    box-shadow 0.15s ease;
 }
 
-.looplock-actions button:hover {
-  background: #3a3d48;
+.looplock-action-btn:hover {
+  background: var(--ll-btn-hover-bg);
+}
+
+.looplock-action-btn:active {
+  transform: scale(0.98);
+}
+
+.looplock-primary-action {
+  background: linear-gradient(135deg, rgba(105, 121, 255, 0.88), rgba(85, 99, 232, 0.88));
+  color: white;
+  box-shadow: 0 8px 16px rgba(89, 104, 240, 0.22);
+}
+
+.looplock-primary-action:hover {
+  filter: brightness(1.05);
+}
+
+.looplock-loop-active {
+  background: linear-gradient(135deg, rgba(70, 205, 128, 0.92), rgba(44, 170, 102, 0.92));
+  color: white;
+  box-shadow: 0 8px 16px rgba(47, 185, 112, 0.22);
+}
+
+.looplock-loop-active:hover {
+  filter: brightness(1.04);
+}
+
+@keyframes looplockFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

@@ -12,8 +12,26 @@ export interface PanelState extends LoopRange {
   errorMessage: string | null;
 }
 
-export interface PageLoopStorage {
-  key: string;
-  range: LoopRange;
-  savedAt: number;
+export type ThemeMode = "dark" | "light";
+
+export interface ExtensionUiState {
+  looplockEnabled: boolean;
+  floatingPanelVisible: boolean;
+  collapsed: boolean;
+  themeMode: ThemeMode;
 }
+
+export interface PopupStatusResponse {
+  supported: boolean;
+  siteType: "youtube" | "generic" | "unknown";
+  looplockEnabled: boolean;
+  panelVisible: boolean;
+  mediaDetected: boolean;
+  themeMode: ThemeMode;
+}
+
+export type ContentMessage =
+  | { type: "GET_STATUS" }
+  | { type: "OPEN_LOOPLOCK" }
+  | { type: "SHOW_PANEL" }
+  | { type: "SET_THEME"; themeMode: ThemeMode };

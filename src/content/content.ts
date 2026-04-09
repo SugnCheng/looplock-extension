@@ -3,9 +3,23 @@ import "../ui/panel.css";
 import { detectPrimaryMedia } from "./media-detector";
 import { LoopController } from "./loop-controller";
 import { FloatingPanel } from "../ui/floating-panel";
-import { loadCollapsedState, saveCollapsedState } from "../storage/storage";
+import {
+  loadCollapsedState,
+  saveCollapsedState,
+  loadLooplockEnabled,
+  saveLooplockEnabled,
+  loadPanelVisible,
+  savePanelVisible,
+  loadThemeMode,
+  saveThemeMode
+} from "../storage/storage";
 import { logger } from "../shared/logger";
-import type { PanelState } from "../shared/types";
+import type {
+  PanelState,
+  PopupStatusResponse,
+  ContentMessage,
+  ThemeMode
+} from "../shared/types";
 import { observeDomChanges } from "./dom-observer";
 import { isYouTubePage } from "./site-adapters/youtube";
 import { getPageStorageKey } from "./page-key";
@@ -15,6 +29,10 @@ import { installNavigationWatcher } from "./navigation-watcher";
 let currentPageKey = getPageStorageKey();
 let lastKnownUrl = location.href;
 let lastBoundMedia: HTMLMediaElement | null = null;
+
+let looplockEnabled = false;
+let floatingPanelVisible = false;
+let themeMode: ThemeMode = "dark";
 
 const initialState: PanelState = {
   startTime: null,
@@ -30,29 +48,32 @@ const initialState: PanelState = {
 const panelState: PanelState = { ...initialState };
 
 const loopController = new LoopController(({ range, errorMessage, currentTime }) => {
-  panel.update({
-    startTime: range.startTime,
-    endTime: range.endTime,
-    enabled: range.enabled,
-    errorMessage,
-    currentTime
-  });
+  panelState.startTime = range.startTime;
+  panelState.endTime = range.endTime;
+  panelState.enabled = range.enabled;
+  panelState.errorMessage = errorMessage;
+  panelState.currentTime = currentTime;
+  renderPanel();
 });
 
 const panel = new FloatingPanel(initialState, {
   onSetStart: () => {
+    if (!looplockEnabled) return;
     loopController.setStartFromCurrentTime();
     syncPanel();
   },
   onSetEnd: () => {
+    if (!looplockEnabled) return;
     loopController.setEndFromCurrentTime();
     syncPanel();
   },
   onToggleLoop: () => {
+    if (!looplockEnabled) return;
     loopController.toggleEnabled();
     syncPanel();
   },
   onClear: () => {
+    if (!looplockEnabled) return;
     loopController.clear();
     syncPanel();
   },
@@ -66,11 +87,46 @@ const panel = new FloatingPanel(initialState, {
       logger.warn("Failed to save collapsed state:", error);
     }
 
-    syncPanel();
+    renderPanel();
+  },
+  onClosePanel: async () => {
+    loopController.clear();
+
+    panelState.startTime = null;
+    panelState.endTime = null;
+    panelState.enabled = false;
+    panelState.errorMessage = null;
+
+    looplockEnabled = false;
+    floatingPanelVisible = false;
+
+    try {
+      await saveLooplockEnabled(false);
+      await savePanelVisible(false);
+    } catch (error) {
+      logger.warn("Failed to persist close-panel state:", error);
+    }
+
+    renderPanel();
   }
 });
 
 panel.mount();
+
+function renderPanel(): void {
+  const shouldShow = looplockEnabled && floatingPanelVisible;
+  const root = document.getElementById("looplock-root");
+
+  if (root) {
+    root.style.display = shouldShow ? "block" : "none";
+  }
+
+  panel.setTheme(themeMode);
+
+  if (shouldShow) {
+    panel.update(panelState);
+  }
+}
 
 function resetLoopStateForNewPage(nextPageKey: string, nextUrl: string): void {
   logger.info("Resetting loop state for new page.", {
@@ -94,7 +150,7 @@ function resetLoopStateForNewPage(nextPageKey: string, nextUrl: string): void {
   lastKnownUrl = nextUrl;
   lastBoundMedia = null;
 
-  syncPanel();
+  renderPanel();
 }
 
 async function bindMedia(retryCount = 0): Promise<void> {
@@ -119,7 +175,7 @@ async function bindMedia(retryCount = 0): Promise<void> {
   loopController.attachMedia(media);
 
   if (mediaChanged) {
-    logger.info("Media element changed on current page. Preserving current empty/current state.");
+    logger.info("Media element changed on current page.");
   }
 
   lastBoundMedia = media;
@@ -140,12 +196,94 @@ function syncPanel(): void {
   panelState.errorMessage = errorMessage;
   panelState.siteType = isYouTubePage() ? "youtube" : "generic";
 
-  panel.update(panelState);
+  renderPanel();
+}
+
+async function setLooplockEnabled(next: boolean): Promise<void> {
+  looplockEnabled = next;
+  await saveLooplockEnabled(next);
+
+  if (!next) {
+    floatingPanelVisible = false;
+    await savePanelVisible(false);
+    loopController.clear();
+    panelState.startTime = null;
+    panelState.endTime = null;
+    panelState.enabled = false;
+    panelState.errorMessage = null;
+  }
+
+  renderPanel();
+}
+
+async function setPanelVisible(next: boolean): Promise<void> {
+  if (!looplockEnabled && next) {
+    return;
+  }
+
+  floatingPanelVisible = next;
+  await savePanelVisible(next);
+  renderPanel();
+}
+
+function buildStatusResponse(): PopupStatusResponse {
+  return {
+    supported: isYouTubePage(),
+    siteType: isYouTubePage() ? "youtube" : "generic",
+    looplockEnabled,
+    panelVisible: floatingPanelVisible,
+    mediaDetected: panelState.mediaDetected,
+    themeMode
+  };
+}
+
+function installMessageHandler(): void {
+  chrome.runtime.onMessage.addListener((message: ContentMessage, _sender, sendResponse) => {
+    void (async () => {
+      switch (message.type) {
+        case "GET_STATUS":
+          sendResponse(buildStatusResponse());
+          return;
+
+        case "OPEN_LOOPLOCK":
+          await setLooplockEnabled(true);
+          await setPanelVisible(true);
+          sendResponse(buildStatusResponse());
+          return;
+
+        case "SHOW_PANEL":
+          await setPanelVisible(true);
+          sendResponse(buildStatusResponse());
+          return;
+
+        case "SET_THEME":
+          themeMode = message.themeMode;
+          await saveThemeMode(themeMode);
+          renderPanel();
+          sendResponse(buildStatusResponse());
+          return;
+
+        default:
+          sendResponse(buildStatusResponse());
+      }
+    })();
+
+    return true;
+  });
 }
 
 async function initialize(): Promise<void> {
   try {
     panelState.collapsed = await loadCollapsedState();
+    looplockEnabled = await loadLooplockEnabled();
+    floatingPanelVisible = await loadPanelVisible();
+    themeMode = await loadThemeMode();
+
+    if (!looplockEnabled) {
+      floatingPanelVisible = false;
+    }
+
+    renderPanel();
     await bindMedia();
   } catch (error) {
     logger.warn("Initialize failed:", error);
@@ -153,6 +291,7 @@ async function initialize(): Promise<void> {
 }
 
 void initialize();
+installMessageHandler();
 
 let rebindTimeout: number | null = null;
 
@@ -207,7 +346,5 @@ setInterval(() => {
 
   if (nextUrl !== lastKnownUrl || nextPageKey !== currentPageKey) {
     handleRouteChange("url polling");
-  } else {
-    syncPanel();
   }
 }, 800);

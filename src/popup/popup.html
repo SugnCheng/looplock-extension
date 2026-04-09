@@ -8,9 +8,49 @@
   </head>
   <body>
     <div class="popup">
-      <h1>LoopLock</h1>
-      <p>Use the floating panel on the page to set A-B loop.</p>
+      <div class="popup-shell">
+        <div class="popup-header">
+          <div class="popup-brand">
+            <div class="popup-title">LoopLock</div>
+            <div class="popup-subtitle">YouTube A-B Loop Controller</div>
+          </div>
+        </div>
+
+        <div class="popup-status-card">
+          <div class="status-row">
+            <span class="status-label">Site</span>
+            <span class="status-value" id="site-status">Checking...</span>
+          </div>
+          <div class="status-row">
+            <span class="status-label">LoopLock</span>
+            <span class="status-value" id="enabled-status">Checking...</span>
+          </div>
+          <div class="status-row">
+            <span class="status-label">Panel</span>
+            <span class="status-value" id="panel-status">Checking...</span>
+          </div>
+        </div>
+
+        <div class="popup-theme-card">
+          <div class="theme-label">Theme</div>
+          <div class="theme-toggle-group">
+            <button id="theme-dark-btn" class="theme-toggle-btn" type="button">Dark</button>
+            <button id="theme-light-btn" class="theme-toggle-btn" type="button">Light</button>
+          </div>
+        </div>
+
+        <div class="popup-actions">
+          <button id="open-looplock-btn" class="primary-btn">
+            Open LoopLock
+          </button>
+        </div>
+
+        <div class="popup-tip">
+          Use the floating panel to set A/B, control loop playback, and exit with ✕.
+        </div>
+      </div>
     </div>
+
     <script type="module" src="./popup.ts"></script>
   </body>
 </html>
