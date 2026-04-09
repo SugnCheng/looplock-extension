@@ -1,5 +1,9 @@
 import type { ContentMessage, PopupStatusResponse, ThemeMode } from "../shared/types";
 
+type PopupView = "main" | "settings";
+
+let currentView: PopupView = "main";
+
 function getActiveTab(): Promise<chrome.tabs.Tab | null> {
   return new Promise((resolve) => {
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
@@ -76,6 +80,18 @@ function setOpenButtonState(status: PopupStatusResponse | null, supported: boole
   }
 
   btn.textContent = "Open LoopLock";
+}
+
+function setView(nextView: PopupView): void {
+  currentView = nextView;
+
+  const mainView = document.getElementById("main-view");
+  const settingsView = document.getElementById("settings-view");
+
+  if (!mainView || !settingsView) return;
+
+  mainView.classList.toggle("hidden-view", currentView !== "main");
+  settingsView.classList.toggle("hidden-view", currentView !== "settings");
 }
 
 async function sendMessageToActiveTab(message: ContentMessage): Promise<PopupStatusResponse | null> {
@@ -218,7 +234,20 @@ function bindEvents(): void {
   document.getElementById("theme-light-btn")?.addEventListener("click", async () => {
     await runAction({ type: "SET_THEME", themeMode: "light" });
   });
+
+  document.getElementById("open-settings-btn")?.addEventListener("click", () => {
+    setView("settings");
+  });
+
+  document.getElementById("back-to-main-btn")?.addEventListener("click", () => {
+    setView("main");
+  });
 }
 
-bindEvents();
-void refreshStatus();
+function initializePopup(): void {
+  setView("main");
+  bindEvents();
+  void refreshStatus();
+}
+
+initializePopup();

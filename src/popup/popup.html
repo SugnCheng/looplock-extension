@@ -9,60 +9,129 @@
   <body>
     <div class="popup">
       <div class="popup-shell">
-        <div class="popup-header">
-          <div class="popup-brand">
-            <div class="popup-title-row">
-              <div class="popup-title">LoopLock</div>
-              <div class="popup-badge" id="top-status-badge">Checking</div>
-            </div>
-            <div class="popup-subtitle">YouTube A-B Loop Controller</div>
-          </div>
-        </div>
-
-        <div class="popup-hero-card">
-          <div class="popup-hero-copy">
-            <div class="popup-hero-title" id="hero-title">Checking current page…</div>
-            <div class="popup-hero-subtitle" id="hero-subtitle">
-              Detecting LoopLock status and media availability.
+        <div id="main-view">
+          <div class="popup-header">
+            <div class="popup-brand">
+              <div class="popup-title-row">
+                <div class="popup-title">LoopLock</div>
+                <div class="popup-badge" id="top-status-badge">Checking</div>
+              </div>
+              <div class="popup-subtitle">YouTube A-B Loop Controller</div>
             </div>
           </div>
+
+          <div class="popup-hero-card">
+            <div class="popup-hero-copy">
+              <div class="popup-hero-title" id="hero-title">Checking current page…</div>
+              <div class="popup-hero-subtitle" id="hero-subtitle">
+                Detecting LoopLock status and media availability.
+              </div>
+            </div>
+          </div>
+
+          <div class="popup-status-card">
+            <div class="status-row">
+              <span class="status-label">Site</span>
+              <span class="status-value" id="site-status">Checking...</span>
+            </div>
+            <div class="status-row">
+              <span class="status-label">LoopLock</span>
+              <span class="status-value" id="enabled-status">Checking...</span>
+            </div>
+            <div class="status-row">
+              <span class="status-label">Panel</span>
+              <span class="status-value" id="panel-status">Checking...</span>
+            </div>
+            <div class="status-row">
+              <span class="status-label">Media</span>
+              <span class="status-value" id="media-status">Checking...</span>
+            </div>
+          </div>
+
+          <div class="popup-theme-card">
+            <div class="theme-label">Theme</div>
+            <div class="theme-toggle-group">
+              <button id="theme-dark-btn" class="theme-toggle-btn" type="button">Dark</button>
+              <button id="theme-light-btn" class="theme-toggle-btn" type="button">Light</button>
+            </div>
+          </div>
+
+          <div class="popup-actions two-column-actions">
+            <button id="open-looplock-btn" class="primary-btn">
+              Open LoopLock
+            </button>
+            <button id="open-settings-btn" class="secondary-btn" type="button">
+              Settings
+            </button>
+          </div>
+
+          <div class="popup-tip" id="popup-tip">
+            Use the floating panel to set A/B, control loop playback, and exit with ✕.
+          </div>
         </div>
 
-        <div class="popup-status-card">
-          <div class="status-row">
-            <span class="status-label">Site</span>
-            <span class="status-value" id="site-status">Checking...</span>
+        <div id="settings-view" class="hidden-view">
+          <div class="popup-header settings-header">
+            <div class="popup-brand">
+              <div class="popup-title-row">
+                <div class="popup-title">Settings</div>
+              </div>
+              <div class="popup-subtitle">Advanced controls and customization</div>
+            </div>
           </div>
-          <div class="status-row">
-            <span class="status-label">LoopLock</span>
-            <span class="status-value" id="enabled-status">Checking...</span>
-          </div>
-          <div class="status-row">
-            <span class="status-label">Panel</span>
-            <span class="status-value" id="panel-status">Checking...</span>
-          </div>
-          <div class="status-row">
-            <span class="status-label">Media</span>
-            <span class="status-value" id="media-status">Checking...</span>
-          </div>
-        </div>
 
-        <div class="popup-theme-card">
-          <div class="theme-label">Theme</div>
-          <div class="theme-toggle-group">
-            <button id="theme-dark-btn" class="theme-toggle-btn" type="button">Dark</button>
-            <button id="theme-light-btn" class="theme-toggle-btn" type="button">Light</button>
+          <div class="settings-card">
+            <div class="settings-section-title">Keyboard Shortcuts</div>
+            <div class="settings-note">
+              Keyboard shortcuts are planned as an advanced feature and are
+              <strong>off by default</strong>.
+            </div>
           </div>
-        </div>
 
-        <div class="popup-actions">
-          <button id="open-looplock-btn" class="primary-btn">
-            Open LoopLock
-          </button>
-        </div>
+          <div class="settings-card">
+            <div class="settings-section-title">Planned Default Mapping</div>
 
-        <div class="popup-tip" id="popup-tip">
-          Use the floating panel to set A/B, control loop playback, and exit with ✕.
+            <div class="settings-grid">
+              <div class="settings-field">
+                <span class="settings-field-label">Toggle shortcut mode</span>
+                <div class="settings-static-value">Alt+G</div>
+              </div>
+
+              <div class="settings-field">
+                <span class="settings-field-label">Set A</span>
+                <div class="settings-static-value">Alt+A</div>
+              </div>
+
+              <div class="settings-field">
+                <span class="settings-field-label">Set B</span>
+                <div class="settings-static-value">Alt+S</div>
+              </div>
+
+              <div class="settings-field">
+                <span class="settings-field-label">Toggle Loop</span>
+                <div class="settings-static-value">Alt+D</div>
+              </div>
+
+              <div class="settings-field">
+                <span class="settings-field-label">Clear</span>
+                <div class="settings-static-value">Alt+F</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-card">
+            <div class="settings-section-title">Notes</div>
+            <div class="settings-note">
+              This page is currently a safe UI skeleton. Settings persistence and
+              actual keyboard shortcut behavior will be added in later steps.
+            </div>
+          </div>
+
+          <div class="popup-actions settings-actions">
+            <button id="back-to-main-btn" class="primary-btn" type="button">
+              Back
+            </button>
+          </div>
         </div>
       </div>
     </div>

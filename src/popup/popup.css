@@ -16,6 +16,8 @@
   --popup-theme-btn-active-text: #ffffff;
   --popup-primary-bg: linear-gradient(135deg, #6979ff 0%, #5563e8 100%);
   --popup-primary-shadow: 0 8px 18px rgba(89, 104, 240, 0.28);
+  --popup-secondary-bg: rgba(255, 255, 255, 0.06);
+  --popup-secondary-border: rgba(255, 255, 255, 0.08);
   --popup-badge-bg: rgba(255, 255, 255, 0.08);
   --popup-badge-text: #ffffff;
   --popup-badge-active-bg: rgba(70, 205, 128, 0.18);
@@ -44,6 +46,8 @@ body[data-theme="light"] {
   --popup-theme-btn-active-text: #ffffff;
   --popup-primary-bg: linear-gradient(135deg, #6979ff 0%, #5563e8 100%);
   --popup-primary-shadow: 0 8px 18px rgba(89, 104, 240, 0.18);
+  --popup-secondary-bg: rgba(25, 34, 48, 0.05);
+  --popup-secondary-border: rgba(25, 34, 48, 0.08);
   --popup-badge-bg: rgba(25, 34, 48, 0.06);
   --popup-badge-text: #1d2430;
   --popup-badge-active-bg: rgba(46, 204, 113, 0.16);
@@ -65,7 +69,7 @@ body {
 }
 
 .popup {
-  width: 300px;
+  width: 320px;
   padding: 14px;
 }
 
@@ -78,8 +82,16 @@ body {
   transition: background 0.18s ease, border-color 0.18s ease;
 }
 
+.hidden-view {
+  display: none;
+}
+
 .popup-header {
   margin-bottom: 12px;
+}
+
+.settings-header {
+  margin-bottom: 14px;
 }
 
 .popup-brand {
@@ -138,7 +150,8 @@ body {
 
 .popup-hero-card,
 .popup-status-card,
-.popup-theme-card {
+.popup-theme-card,
+.settings-card {
   display: grid;
   gap: 8px;
   margin-bottom: 14px;
@@ -230,37 +243,95 @@ body {
   margin-bottom: 12px;
 }
 
-.primary-btn {
+.two-column-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.settings-actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.primary-btn,
+.secondary-btn {
   width: 100%;
-  border: none;
   border-radius: 12px;
   padding: 12px 14px;
   cursor: pointer;
-  background: var(--popup-primary-bg);
-  color: white;
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.2px;
-  box-shadow: var(--popup-primary-shadow);
-  transition: filter 0.16s ease, transform 0.12s ease, opacity 0.16s ease;
+  transition: filter 0.16s ease, transform 0.12s ease, opacity 0.16s ease, background 0.16s ease;
 }
 
-.primary-btn:hover {
+.primary-btn {
+  border: none;
+  background: var(--popup-primary-bg);
+  color: white;
+  box-shadow: var(--popup-primary-shadow);
+}
+
+.secondary-btn {
+  border: 1px solid var(--popup-secondary-border);
+  background: var(--popup-secondary-bg);
+  color: var(--popup-text);
+}
+
+.primary-btn:hover,
+.secondary-btn:hover {
   filter: brightness(1.05);
 }
 
-.primary-btn:active {
+.primary-btn:active,
+.secondary-btn:active {
   transform: scale(0.99);
 }
 
-.primary-btn:disabled {
+.primary-btn:disabled,
+.secondary-btn:disabled {
   cursor: not-allowed;
   opacity: 0.55;
   box-shadow: none;
 }
 
-.popup-tip {
+.popup-tip,
+.settings-note {
   font-size: 12px;
   line-height: 1.5;
   color: var(--popup-muted);
+}
+
+.settings-section-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--popup-text);
+  margin-bottom: 2px;
+}
+
+.settings-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.settings-field {
+  display: grid;
+  gap: 6px;
+}
+
+.settings-field-label {
+  font-size: 12px;
+  color: var(--popup-muted);
+}
+
+.settings-static-value {
+  border: 1px solid var(--popup-theme-btn-border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: var(--popup-theme-btn-bg);
+  color: var(--popup-text);
+  font-size: 12px;
+  font-weight: 700;
 }
