@@ -41,7 +41,7 @@
   --ll-card-border: rgba(25, 34, 48, 0.05);
   --ll-card-hover-bg: rgba(25, 34, 48, 0.05);
   --ll-card-hover-border: rgba(25, 34, 48, 0.08);
-  --ll-now-bg: rgba(105, 121, 255, 0.10);
+  --ll-now-bg: rgba(105, 121, 255, 0.1);
   --ll-now-border: rgba(105, 121, 255, 0.18);
   --ll-btn-bg: rgba(25, 34, 48, 0.06);
   --ll-btn-hover-bg: rgba(25, 34, 48, 0.1);
@@ -171,16 +171,16 @@
 .looplock-body {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
 }
 
 .looplock-metrics-grid {
   display: grid;
-  gap: 6px;
+  gap: 5px;
 }
 
 .looplock-metric-card {
-  padding: 8px 10px;
+  padding: 7px 10px;
   border-radius: 11px;
   background: var(--ll-card-bg);
   border: 1px solid var(--ll-card-border);
@@ -199,16 +199,18 @@
 }
 
 .looplock-metric-label {
-  font-size: 10px;
+  font-size: 9px;
   color: var(--ll-text-sub);
-  margin-bottom: 4px;
-  letter-spacing: 0.2px;
+  margin-bottom: 3px;
+  letter-spacing: 0.24px;
+  text-transform: uppercase;
 }
 
 .looplock-metric-value {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--ll-text-main);
+  line-height: 1.15;
 }
 
 .looplock-error {
@@ -224,18 +226,18 @@
 .looplock-actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 7px;
+  gap: 8px;
   margin-top: 2px;
 }
 
 .looplock-action-btn {
   border: none;
-  border-radius: 10px;
-  padding: 9px 9px;
+  border-radius: 11px;
+  padding: 11px 10px;
   cursor: pointer;
   background: var(--ll-btn-bg);
   color: var(--ll-text-main);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   transition:
     background 0.15s ease,
