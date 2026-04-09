@@ -1,4 +1,9 @@
-import type { PanelState, ThemeMode, PanelPosition } from "../shared/types";
+import type {
+  PanelState,
+  ThemeMode,
+  PanelPosition,
+  ShortcutSettings
+} from "../shared/types";
 import { isYouTubePage } from "./site-adapters/youtube";
 
 export interface ContentRuntimeState {
@@ -10,6 +15,8 @@ export interface ContentRuntimeState {
   themeMode: ThemeMode;
   panelState: PanelState;
   panelPosition: PanelPosition | null;
+  shortcutSettings: ShortcutSettings;
+  shortcutModeActive: boolean;
 }
 
 export function createInitialPanelState(): PanelState {
@@ -25,6 +32,17 @@ export function createInitialPanelState(): PanelState {
   };
 }
 
+export function createDefaultShortcutSettings(): ShortcutSettings {
+  return {
+    enabled: false,
+    toggleEnabledShortcut: "Alt+G",
+    setStartShortcut: "Alt+A",
+    setEndShortcut: "Alt+S",
+    toggleLoopShortcut: "Alt+D",
+    clearShortcut: "Alt+F"
+  };
+}
+
 export function createRuntimeState(initialPageKey: string): ContentRuntimeState {
   return {
     currentPageKey: initialPageKey,
@@ -35,6 +53,8 @@ export function createRuntimeState(initialPageKey: string): ContentRuntimeState 
     themeMode: "dark",
     panelPosition: null,
     panelState: createInitialPanelState(),
+    shortcutSettings: createDefaultShortcutSettings(),
+    shortcutModeActive: false
   };
 }
 

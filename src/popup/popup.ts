@@ -1,15 +1,11 @@
-import type { ContentMessage, PopupStatusResponse, ThemeMode } from "../shared/types";
+import type {
+  ContentMessage,
+  PopupStatusResponse,
+  ThemeMode,
+  ShortcutSettings
+} from "../shared/types";
 
 type PopupView = "main" | "settings";
-
-interface ShortcutSettings {
-  enabled: boolean;
-  toggleEnabledShortcut: string;
-  setStartShortcut: string;
-  setEndShortcut: string;
-  toggleLoopShortcut: string;
-  clearShortcut: string;
-}
 
 const SHORTCUT_SETTINGS_STORAGE_KEY = "looplock:popup:shortcutSettings";
 
@@ -27,37 +23,186 @@ function getDefaultShortcutSettings(): ShortcutSettings {
   };
 }
 
+function sanitizeShortcutString(value: string): string {
+  const raw = value.trim();
+  if (!raw) return "";
+
+  const parts = raw
+    .split("+")
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  if (parts.length === 0) return "";
+
+  const modifiers = new Set<string>();
+  let primaryKey = "";
+
+  for (const part of parts) {
+    const lower = part.toLowerCase();
+
+    if (lower === "ctrl" || lower === "control") {
+      modifiers.add("Ctrl");
+      continue;
+    }
+    if (lower === "alt" || lower === "option") {
+      modifiers.add("Alt");
+      continue;
+    }
+    if (lower === "shift") {
+      modifiers.add("Shift");
+      continue;
+    }
+    if (
+      lower === "meta" ||
+      lower === "cmd" ||
+      lower === "command" ||
+      lower === "win"
+    ) {
+      modifiers.add("Meta");
+      continue;
+    }
+
+    if (primaryKey) return "";
+
+    if (/^[a-z]$/i.test(part)) {
+      primaryKey = part.toUpperCase();
+      continue;
+    }
+
+    if (/^[0-9]$/.test(part)) {
+      primaryKey = part;
+      continue;
+    }
+
+    if (/^f([1-9]|1[0-2])$/i.test(part)) {
+      primaryKey = part.toUpperCase();
+      continue;
+    }
+
+    switch (lower) {
+      case "space":
+      case "spacebar":
+        primaryKey = "Space";
+        break;
+      case "enter":
+      case "return":
+        primaryKey = "Enter";
+        break;
+      case "escape":
+      case "esc":
+        primaryKey = "Escape";
+        break;
+      case "tab":
+        primaryKey = "Tab";
+        break;
+      case "backspace":
+        primaryKey = "Backspace";
+        break;
+      case "delete":
+      case "del":
+        primaryKey = "Delete";
+        break;
+      case "arrowup":
+      case "up":
+        primaryKey = "ArrowUp";
+        break;
+      case "arrowdown":
+      case "down":
+        primaryKey = "ArrowDown";
+        break;
+      case "arrowleft":
+      case "left":
+        primaryKey = "ArrowLeft";
+        break;
+      case "arrowright":
+      case "right":
+        primaryKey = "ArrowRight";
+        break;
+      default:
+        return "";
+    }
+  }
+
+  if (!primaryKey) return "";
+
+  const ordered: string[] = [];
+  if (modifiers.has("Ctrl")) ordered.push("Ctrl");
+  if (modifiers.has("Alt")) ordered.push("Alt");
+  if (modifiers.has("Shift")) ordered.push("Shift");
+  if (modifiers.has("Meta")) ordered.push("Meta");
+  ordered.push(primaryKey);
+
+  return ordered.join("+");
+}
+
+function sanitizeShortcutSettings(value: Partial<ShortcutSettings> | null | undefined): ShortcutSettings {
+  const defaults = getDefaultShortcutSettings();
+
+  return {
+    enabled: typeof value?.enabled === "boolean" ? value.enabled : defaults.enabled,
+    toggleEnabledShortcut:
+      sanitizeShortcutString(value?.toggleEnabledShortcut ?? "") || defaults.toggleEnabledShortcut,
+    setStartShortcut:
+      sanitizeShortcutString(value?.setStartShortcut ?? "") || defaults.setStartShortcut,
+    setEndShortcut:
+      sanitizeShortcutString(value?.setEndShortcut ?? "") || defaults.setEndShortcut,
+    toggleLoopShortcut:
+      sanitizeShortcutString(value?.toggleLoopShortcut ?? "") || defaults.toggleLoopShortcut,
+    clearShortcut:
+      sanitizeShortcutString(value?.clearShortcut ?? "") || defaults.clearShortcut
+  };
+}
+
+function serializeKeyboardEvent(event: KeyboardEvent): string {
+  let primaryKey = "";
+
+  if (event.code.startsWith("Key") && event.code.length === 4) {
+    primaryKey = event.code.slice(3).toUpperCase();
+  } else if (event.code.startsWith("Digit") && event.code.length === 6) {
+    primaryKey = event.code.slice(5);
+  } else if (/^F([1-9]|1[0-2])$/.test(event.code)) {
+    primaryKey = event.code.toUpperCase();
+  } else {
+    switch (event.key) {
+      case " ":
+        primaryKey = "Space";
+        break;
+      case "Enter":
+      case "Escape":
+      case "Tab":
+      case "Backspace":
+      case "Delete":
+      case "ArrowUp":
+      case "ArrowDown":
+      case "ArrowLeft":
+      case "ArrowRight":
+        primaryKey = event.key;
+        break;
+      default:
+        if (event.key.length === 1 && /^[a-z0-9]$/i.test(event.key)) {
+          primaryKey = /^[a-z]$/i.test(event.key) ? event.key.toUpperCase() : event.key;
+        }
+    }
+  }
+
+  if (!primaryKey) return "";
+
+  const parts: string[] = [];
+  if (event.ctrlKey) parts.push("Ctrl");
+  if (event.altKey) parts.push("Alt");
+  if (event.shiftKey) parts.push("Shift");
+  if (event.metaKey) parts.push("Meta");
+  parts.push(primaryKey);
+
+  return parts.join("+");
+}
+
 function loadShortcutSettingsFromLocal(): ShortcutSettings {
   try {
     const raw = window.localStorage.getItem(SHORTCUT_SETTINGS_STORAGE_KEY);
     if (!raw) return getDefaultShortcutSettings();
 
-    const parsed = JSON.parse(raw) as Partial<ShortcutSettings>;
-    const defaults = getDefaultShortcutSettings();
-
-    return {
-      enabled: typeof parsed.enabled === "boolean" ? parsed.enabled : defaults.enabled,
-      toggleEnabledShortcut:
-        typeof parsed.toggleEnabledShortcut === "string" && parsed.toggleEnabledShortcut.trim()
-          ? parsed.toggleEnabledShortcut.trim()
-          : defaults.toggleEnabledShortcut,
-      setStartShortcut:
-        typeof parsed.setStartShortcut === "string" && parsed.setStartShortcut.trim()
-          ? parsed.setStartShortcut.trim()
-          : defaults.setStartShortcut,
-      setEndShortcut:
-        typeof parsed.setEndShortcut === "string" && parsed.setEndShortcut.trim()
-          ? parsed.setEndShortcut.trim()
-          : defaults.setEndShortcut,
-      toggleLoopShortcut:
-        typeof parsed.toggleLoopShortcut === "string" && parsed.toggleLoopShortcut.trim()
-          ? parsed.toggleLoopShortcut.trim()
-          : defaults.toggleLoopShortcut,
-      clearShortcut:
-        typeof parsed.clearShortcut === "string" && parsed.clearShortcut.trim()
-          ? parsed.clearShortcut.trim()
-          : defaults.clearShortcut
-    };
+    return sanitizeShortcutSettings(JSON.parse(raw) as Partial<ShortcutSettings>);
   } catch (error) {
     console.warn("Failed to load popup shortcut settings from localStorage.", error);
     return getDefaultShortcutSettings();
@@ -162,11 +307,6 @@ function setView(nextView: PopupView): void {
   settingsView.classList.toggle("hidden-view", currentView !== "settings");
 }
 
-function normalizeShortcutInput(value: string): string {
-  const normalized = value.replace(/\s+/g, "").trim();
-  return normalized.length > 0 ? normalized : "Alt+?";
-}
-
 function populateShortcutForm(settings: ShortcutSettings): void {
   const enabledToggle = document.getElementById("shortcut-enabled-toggle") as HTMLInputElement | null;
   const toggleEnabledInput = document.getElementById("shortcut-toggle-enabled-input") as HTMLInputElement | null;
@@ -183,37 +323,6 @@ function populateShortcutForm(settings: ShortcutSettings): void {
   if (clearInput) clearInput.value = settings.clearShortcut;
 }
 
-function persistShortcutSettingsFromForm(): void {
-  try {
-    const enabledToggle = document.getElementById("shortcut-enabled-toggle") as HTMLInputElement | null;
-    const toggleEnabledInput = document.getElementById("shortcut-toggle-enabled-input") as HTMLInputElement | null;
-    const setStartInput = document.getElementById("shortcut-set-start-input") as HTMLInputElement | null;
-    const setEndInput = document.getElementById("shortcut-set-end-input") as HTMLInputElement | null;
-    const toggleLoopInput = document.getElementById("shortcut-toggle-loop-input") as HTMLInputElement | null;
-    const clearInput = document.getElementById("shortcut-clear-input") as HTMLInputElement | null;
-
-    shortcutSettings = {
-      enabled: enabledToggle?.checked ?? false,
-      toggleEnabledShortcut: normalizeShortcutInput(toggleEnabledInput?.value ?? shortcutSettings.toggleEnabledShortcut),
-      setStartShortcut: normalizeShortcutInput(setStartInput?.value ?? shortcutSettings.setStartShortcut),
-      setEndShortcut: normalizeShortcutInput(setEndInput?.value ?? shortcutSettings.setEndShortcut),
-      toggleLoopShortcut: normalizeShortcutInput(toggleLoopInput?.value ?? shortcutSettings.toggleLoopShortcut),
-      clearShortcut: normalizeShortcutInput(clearInput?.value ?? shortcutSettings.clearShortcut)
-    };
-
-    saveShortcutSettingsToLocal(shortcutSettings);
-    populateShortcutForm(shortcutSettings);
-  } catch (error) {
-    console.warn("Failed to persist popup shortcut settings.", error);
-  }
-}
-
-function resetShortcutSettingsToDefault(): void {
-  shortcutSettings = getDefaultShortcutSettings();
-  saveShortcutSettingsToLocal(shortcutSettings);
-  populateShortcutForm(shortcutSettings);
-}
-
 async function sendMessageToActiveTab(message: ContentMessage): Promise<PopupStatusResponse | null> {
   const tab = await getActiveTab();
   if (!tab?.id) return null;
@@ -224,6 +333,36 @@ async function sendMessageToActiveTab(message: ContentMessage): Promise<PopupSta
   } catch {
     return null;
   }
+}
+
+async function syncShortcutSettingsToActiveTab(): Promise<void> {
+  const tab = await getActiveTab();
+  const supported = isSupportedUrl(tab?.url);
+
+  if (!supported) return;
+
+  try {
+    await sendMessageToActiveTab({
+      type: "SYNC_SHORTCUT_SETTINGS",
+      settings: shortcutSettings
+    });
+  } catch (error) {
+    console.warn("Failed to sync shortcut settings to active tab.", error);
+  }
+}
+
+function persistShortcutSettings(): void {
+  shortcutSettings = sanitizeShortcutSettings(shortcutSettings);
+  saveShortcutSettingsToLocal(shortcutSettings);
+  populateShortcutForm(shortcutSettings);
+  void syncShortcutSettingsToActiveTab();
+}
+
+function resetShortcutSettingsToDefault(): void {
+  shortcutSettings = getDefaultShortcutSettings();
+  saveShortcutSettingsToLocal(shortcutSettings);
+  populateShortcutForm(shortcutSettings);
+  void syncShortcutSettingsToActiveTab();
 }
 
 function renderUnsupportedState(): void {
@@ -334,28 +473,80 @@ async function runAction(message: ContentMessage): Promise<void> {
   renderStatus(status, supported);
 }
 
-function bindShortcutSettingsEvents(): void {
-  document.getElementById("shortcut-enabled-toggle")?.addEventListener("change", () => {
-    persistShortcutSettingsFromForm();
-  });
-
-  const inputIds = [
-    "shortcut-toggle-enabled-input",
-    "shortcut-set-start-input",
-    "shortcut-set-end-input",
-    "shortcut-toggle-loop-input",
-    "shortcut-clear-input"
+function bindShortcutCaptureInputs(): void {
+  const fields = [
+    {
+      id: "shortcut-toggle-enabled-input",
+      apply: (value: string) => {
+        shortcutSettings.toggleEnabledShortcut = value;
+      }
+    },
+    {
+      id: "shortcut-set-start-input",
+      apply: (value: string) => {
+        shortcutSettings.setStartShortcut = value;
+      }
+    },
+    {
+      id: "shortcut-set-end-input",
+      apply: (value: string) => {
+        shortcutSettings.setEndShortcut = value;
+      }
+    },
+    {
+      id: "shortcut-toggle-loop-input",
+      apply: (value: string) => {
+        shortcutSettings.toggleLoopShortcut = value;
+      }
+    },
+    {
+      id: "shortcut-clear-input",
+      apply: (value: string) => {
+        shortcutSettings.clearShortcut = value;
+      }
+    }
   ];
 
-  for (const id of inputIds) {
-    document.getElementById(id)?.addEventListener("change", () => {
-      persistShortcutSettingsFromForm();
+  for (const field of fields) {
+    const input = document.getElementById(field.id) as HTMLInputElement | null;
+    if (!input) continue;
+
+    input.readOnly = true;
+    input.placeholder = "Press shortcut";
+
+    input.addEventListener("keydown", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      if (event.key === "Backspace" || event.key === "Delete") {
+        field.apply("");
+        input.value = "";
+        persistShortcutSettings();
+        return;
+      }
+
+      const shortcut = serializeKeyboardEvent(event);
+      if (!shortcut) return;
+
+      field.apply(shortcut);
+      input.value = shortcut;
+      persistShortcutSettings();
     });
   }
+}
+
+function bindShortcutSettingsEvents(): void {
+  document.getElementById("shortcut-enabled-toggle")?.addEventListener("change", (event) => {
+    const input = event.currentTarget as HTMLInputElement;
+    shortcutSettings.enabled = input.checked;
+    persistShortcutSettings();
+  });
 
   document.getElementById("reset-shortcuts-btn")?.addEventListener("click", () => {
     resetShortcutSettingsToDefault();
   });
+
+  bindShortcutCaptureInputs();
 }
 
 function bindEvents(): void {
@@ -365,10 +556,12 @@ function bindEvents(): void {
 
     if (currentButtonText === "Show Panel") {
       await runAction({ type: "SHOW_PANEL" });
+      await syncShortcutSettingsToActiveTab();
       return;
     }
 
     await runAction({ type: "OPEN_LOOPLOCK" });
+    await syncShortcutSettingsToActiveTab();
   });
 
   document.getElementById("theme-dark-btn")?.addEventListener("click", async () => {
@@ -394,10 +587,17 @@ function initializePopup(): void {
   setView("main");
   bindEvents();
 
-  shortcutSettings = loadShortcutSettingsFromLocal();
-  populateShortcutForm(shortcutSettings);
+  try {
+    shortcutSettings = loadShortcutSettingsFromLocal();
+    populateShortcutForm(shortcutSettings);
+  } catch (error) {
+    console.warn("Failed to initialize shortcut settings.", error);
+    shortcutSettings = getDefaultShortcutSettings();
+    populateShortcutForm(shortcutSettings);
+  }
 
   void refreshStatus();
+  void syncShortcutSettingsToActiveTab();
 }
 
 initializePopup();

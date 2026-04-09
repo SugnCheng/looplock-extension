@@ -20,7 +20,7 @@ import type {
   PopupStatusResponse,
   ContentMessage,
   ThemeMode,
-  PanelPosition
+  ShortcutSettings
 } from "../shared/types";
 import { observeDomChanges } from "./dom-observer";
 import { isYouTubePage } from "./site-adapters/youtube";
@@ -32,8 +32,16 @@ import {
   resetLoopRangeState,
   resetMediaState,
   shouldShowPanel,
-  updateSiteType
+  updateSiteType,
+  createDefaultShortcutSettings
 } from "./runtime-state";
+
+type ShortcutAction =
+  | "TOGGLE_MODE"
+  | "SET_START"
+  | "SET_END"
+  | "TOGGLE_LOOP"
+  | "CLEAR";
 
 const runtime = createRuntimeState(getPageStorageKey());
 
@@ -179,26 +187,152 @@ async function applyTheme(nextThemeMode: ThemeMode): Promise<void> {
   renderPanel();
 }
 
-function resetLoopStateForNewPage(nextPageKey: string, nextUrl: string): void {
-  logger.info("Resetting loop state for new page.", {
-    fromPageKey: runtime.currentPageKey,
-    toPageKey: nextPageKey,
-    fromUrl: runtime.lastKnownUrl,
-    toUrl: nextUrl
-  });
+function sanitizeShortcutString(value: string): string {
+  const raw = value.trim();
+  if (!raw) return "";
 
-  loopController.clear();
-  loopController.attachMedia(null);
+  const parts = raw
+    .split("+")
+    .map((part) => part.trim())
+    .filter(Boolean);
 
-  resetLoopRangeState(runtime.panelState);
-  resetMediaState(runtime.panelState);
+  if (parts.length === 0) return "";
 
-  runtime.currentPageKey = nextPageKey;
-  runtime.lastKnownUrl = nextUrl;
-  runtime.lastBoundMedia = null;
+  const modifiers = new Set<string>();
+  let primaryKey = "";
 
-  updateSiteType(runtime.panelState);
-  renderPanel();
+  for (const part of parts) {
+    const lower = part.toLowerCase();
+
+    if (lower === "ctrl" || lower === "control") {
+      modifiers.add("Ctrl");
+      continue;
+    }
+    if (lower === "alt" || lower === "option") {
+      modifiers.add("Alt");
+      continue;
+    }
+    if (lower === "shift") {
+      modifiers.add("Shift");
+      continue;
+    }
+    if (
+      lower === "meta" ||
+      lower === "cmd" ||
+      lower === "command" ||
+      lower === "win"
+    ) {
+      modifiers.add("Meta");
+      continue;
+    }
+
+    if (primaryKey) {
+      return "";
+    }
+
+    if (/^[a-z]$/i.test(part)) {
+      primaryKey = part.toUpperCase();
+      continue;
+    }
+
+    if (/^[0-9]$/.test(part)) {
+      primaryKey = part;
+      continue;
+    }
+
+    if (/^f([1-9]|1[0-2])$/i.test(part)) {
+      primaryKey = part.toUpperCase();
+      continue;
+    }
+
+    switch (lower) {
+      case "space":
+      case "spacebar":
+        primaryKey = "Space";
+        break;
+      case "enter":
+      case "return":
+        primaryKey = "Enter";
+        break;
+      case "escape":
+      case "esc":
+        primaryKey = "Escape";
+        break;
+      case "tab":
+        primaryKey = "Tab";
+        break;
+      case "backspace":
+        primaryKey = "Backspace";
+        break;
+      case "delete":
+      case "del":
+        primaryKey = "Delete";
+        break;
+      case "arrowup":
+      case "up":
+        primaryKey = "ArrowUp";
+        break;
+      case "arrowdown":
+      case "down":
+        primaryKey = "ArrowDown";
+        break;
+      case "arrowleft":
+      case "left":
+        primaryKey = "ArrowLeft";
+        break;
+      case "arrowright":
+      case "right":
+        primaryKey = "ArrowRight";
+        break;
+      default:
+        return "";
+    }
+  }
+
+  if (!primaryKey) return "";
+
+  const ordered: string[] = [];
+  if (modifiers.has("Ctrl")) ordered.push("Ctrl");
+  if (modifiers.has("Alt")) ordered.push("Alt");
+  if (modifiers.has("Shift")) ordered.push("Shift");
+  if (modifiers.has("Meta")) ordered.push("Meta");
+  ordered.push(primaryKey);
+
+  return ordered.join("+");
+}
+
+function sanitizeShortcutSettings(settings: ShortcutSettings): ShortcutSettings {
+  const defaults = createDefaultShortcutSettings();
+
+  return {
+    enabled: !!settings.enabled,
+    toggleEnabledShortcut:
+      sanitizeShortcutString(settings.toggleEnabledShortcut) || defaults.toggleEnabledShortcut,
+    setStartShortcut:
+      sanitizeShortcutString(settings.setStartShortcut) || defaults.setStartShortcut,
+    setEndShortcut:
+      sanitizeShortcutString(settings.setEndShortcut) || defaults.setEndShortcut,
+    toggleLoopShortcut:
+      sanitizeShortcutString(settings.toggleLoopShortcut) || defaults.toggleLoopShortcut,
+    clearShortcut:
+      sanitizeShortcutString(settings.clearShortcut) || defaults.clearShortcut
+  };
+}
+
+function applyShortcutSettings(settings: ShortcutSettings): void {
+  const nextSettings = sanitizeShortcutSettings(settings);
+  const wasEnabled = runtime.shortcutSettings.enabled;
+
+  runtime.shortcutSettings = nextSettings;
+
+  if (!nextSettings.enabled) {
+    runtime.shortcutModeActive = false;
+    return;
+  }
+
+  if (!wasEnabled) {
+    runtime.shortcutModeActive = true;
+  }
 }
 
 async function bindMedia(retryCount = 0): Promise<void> {
@@ -231,6 +365,118 @@ async function bindMedia(retryCount = 0): Promise<void> {
   syncPanel();
 }
 
+function serializeKeyboardEvent(event: KeyboardEvent): string {
+  let primaryKey = "";
+
+  if (event.code.startsWith("Key") && event.code.length === 4) {
+    primaryKey = event.code.slice(3).toUpperCase();
+  } else if (event.code.startsWith("Digit") && event.code.length === 6) {
+    primaryKey = event.code.slice(5);
+  } else if (/^F([1-9]|1[0-2])$/.test(event.code)) {
+    primaryKey = event.code.toUpperCase();
+  } else {
+    switch (event.key) {
+      case " ":
+        primaryKey = "Space";
+        break;
+      case "Enter":
+      case "Escape":
+      case "Tab":
+      case "Backspace":
+      case "Delete":
+      case "ArrowUp":
+      case "ArrowDown":
+      case "ArrowLeft":
+      case "ArrowRight":
+        primaryKey = event.key;
+        break;
+      default:
+        if (event.key.length === 1 && /^[a-z0-9]$/i.test(event.key)) {
+          primaryKey = /^[a-z]$/i.test(event.key) ? event.key.toUpperCase() : event.key;
+        }
+    }
+  }
+
+  if (!primaryKey) return "";
+
+  const parts: string[] = [];
+  if (event.ctrlKey) parts.push("Ctrl");
+  if (event.altKey) parts.push("Alt");
+  if (event.shiftKey) parts.push("Shift");
+  if (event.metaKey) parts.push("Meta");
+  parts.push(primaryKey);
+
+  return parts.join("+");
+}
+
+function getShortcutAction(shortcut: string): ShortcutAction | null {
+  if (!shortcut) return null;
+
+  if (shortcut === runtime.shortcutSettings.toggleEnabledShortcut) return "TOGGLE_MODE";
+  if (shortcut === runtime.shortcutSettings.setStartShortcut) return "SET_START";
+  if (shortcut === runtime.shortcutSettings.setEndShortcut) return "SET_END";
+  if (shortcut === runtime.shortcutSettings.toggleLoopShortcut) return "TOGGLE_LOOP";
+  if (shortcut === runtime.shortcutSettings.clearShortcut) return "CLEAR";
+
+  return null;
+}
+
+function isEditableTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  if (target.isContentEditable) return true;
+
+  const tagName = target.tagName.toLowerCase();
+  return tagName === "input" || tagName === "textarea" || tagName === "select";
+}
+
+function handleShortcutAction(action: ShortcutAction): void {
+  switch (action) {
+    case "TOGGLE_MODE":
+      runtime.shortcutModeActive = !runtime.shortcutModeActive;
+      return;
+    case "SET_START":
+      loopController.setStartFromCurrentTime();
+      syncPanel();
+      return;
+    case "SET_END":
+      loopController.setEndFromCurrentTime();
+      syncPanel();
+      return;
+    case "TOGGLE_LOOP":
+      loopController.toggleEnabled();
+      syncPanel();
+      return;
+    case "CLEAR":
+      loopController.clear();
+      syncPanel();
+      return;
+  }
+}
+
+function installShortcutHandler(): void {
+  window.addEventListener(
+    "keydown",
+    (event) => {
+      if (!isYouTubePage()) return;
+      if (!runtime.looplockEnabled) return;
+      if (!runtime.shortcutSettings.enabled) return;
+      if (isEditableTarget(event.target)) return;
+
+      const shortcut = serializeKeyboardEvent(event);
+      const action = getShortcutAction(shortcut);
+
+      if (!action) return;
+      if (action !== "TOGGLE_MODE" && !runtime.shortcutModeActive) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      handleShortcutAction(action);
+    },
+    true
+  );
+}
+
 function buildStatusResponse(): PopupStatusResponse {
   return {
     supported: isYouTubePage(),
@@ -238,7 +484,9 @@ function buildStatusResponse(): PopupStatusResponse {
     looplockEnabled: runtime.looplockEnabled,
     panelVisible: runtime.floatingPanelVisible,
     mediaDetected: runtime.panelState.mediaDetected,
-    themeMode: runtime.themeMode
+    themeMode: runtime.themeMode,
+    shortcutSettingsEnabled: runtime.shortcutSettings.enabled,
+    shortcutModeActive: runtime.shortcutModeActive
   };
 }
 
@@ -262,6 +510,11 @@ function installMessageHandler(): void {
 
         case "SET_THEME":
           await applyTheme(message.themeMode);
+          sendResponse(buildStatusResponse());
+          return;
+
+        case "SYNC_SHORTCUT_SETTINGS":
+          applyShortcutSettings(message.settings);
           sendResponse(buildStatusResponse());
           return;
 
@@ -296,6 +549,7 @@ async function initialize(): Promise<void> {
 
 void initialize();
 installMessageHandler();
+installShortcutHandler();
 
 let rebindTimeout: number | null = null;
 
@@ -326,6 +580,28 @@ function handleRouteChange(reason: string): void {
 
   resetLoopStateForNewPage(nextPageKey, nextUrl);
   scheduleBind(reason);
+}
+
+function resetLoopStateForNewPage(nextPageKey: string, nextUrl: string): void {
+  logger.info("Resetting loop state for new page.", {
+    fromPageKey: runtime.currentPageKey,
+    toPageKey: nextPageKey,
+    fromUrl: runtime.lastKnownUrl,
+    toUrl: nextUrl
+  });
+
+  loopController.clear();
+  loopController.attachMedia(null);
+
+  resetLoopRangeState(runtime.panelState);
+  resetMediaState(runtime.panelState);
+
+  runtime.currentPageKey = nextPageKey;
+  runtime.lastKnownUrl = nextUrl;
+  runtime.lastBoundMedia = null;
+
+  updateSiteType(runtime.panelState);
+  renderPanel();
 }
 
 installNavigationWatcher(() => {
