@@ -47,6 +47,141 @@ const initialState: PanelState = {
 
 const panelState: PanelState = { ...initialState };
 
+function updateSiteType(): void {
+  panelState.siteType = isYouTubePage() ? "youtube" : "generic";
+}
+
+function resetLoopRangeState(): void {
+  panelState.startTime = null;
+  panelState.endTime = null;
+  panelState.enabled = false;
+  panelState.errorMessage = null;
+}
+
+function resetMediaState(): void {
+  panelState.currentTime = 0;
+  panelState.mediaDetected = false;
+}
+
+async function persistSessionState(): Promise<void> {
+  await saveLooplockEnabled(looplockEnabled);
+  await savePanelVisible(floatingPanelVisible);
+}
+
+function shouldShowPanel(): boolean {
+  return looplockEnabled && floatingPanelVisible;
+}
+
+function applyPanelVisibility(): void {
+  const root = document.getElementById("looplock-root");
+  if (root) {
+    root.style.display = shouldShowPanel() ? "block" : "none";
+  }
+}
+
+function renderPanel(): void {
+  applyPanelVisibility();
+  panel.setTheme(themeMode);
+
+  if (shouldShowPanel()) {
+    panel.update(panelState);
+  }
+}
+
+function syncPanel(): void {
+  const media = loopController.getMedia();
+  const range = loopController.getRange();
+  const errorMessage = loopController.getErrorMessage();
+  const currentTime = loopController.getCurrentTime();
+
+  panelState.mediaDetected = !!media;
+  panelState.currentTime = currentTime;
+  panelState.startTime = range.startTime;
+  panelState.endTime = range.endTime;
+  panelState.enabled = range.enabled;
+  panelState.errorMessage = errorMessage;
+  updateSiteType();
+
+  renderPanel();
+}
+
+async function openLooplockSession(): Promise<void> {
+  looplockEnabled = true;
+  floatingPanelVisible = true;
+
+  await persistSessionState();
+  renderPanel();
+}
+
+async function closeLooplockSession(): Promise<void> {
+  loopController.clear();
+
+  looplockEnabled = false;
+  floatingPanelVisible = false;
+
+  resetLoopRangeState();
+
+  await persistSessionState();
+  renderPanel();
+}
+
+async function applyTheme(nextThemeMode: ThemeMode): Promise<void> {
+  themeMode = nextThemeMode;
+  await saveThemeMode(themeMode);
+  renderPanel();
+}
+
+function resetLoopStateForNewPage(nextPageKey: string, nextUrl: string): void {
+  logger.info("Resetting loop state for new page.", {
+    fromPageKey: currentPageKey,
+    toPageKey: nextPageKey,
+    fromUrl: lastKnownUrl,
+    toUrl: nextUrl
+  });
+
+  loopController.clear();
+  loopController.attachMedia(null);
+
+  resetLoopRangeState();
+  resetMediaState();
+
+  currentPageKey = nextPageKey;
+  lastKnownUrl = nextUrl;
+  lastBoundMedia = null;
+
+  updateSiteType();
+  renderPanel();
+}
+
+async function bindMedia(retryCount = 0): Promise<void> {
+  const media = detectPrimaryMedia();
+
+  if (!media) {
+    loopController.attachMedia(null);
+    lastBoundMedia = null;
+    syncPanel();
+
+    if (retryCount < 12) {
+      window.setTimeout(() => {
+        void bindMedia(retryCount + 1);
+      }, 400);
+    }
+
+    return;
+  }
+
+  const mediaChanged = lastBoundMedia !== null && media !== lastBoundMedia;
+
+  loopController.attachMedia(media);
+
+  if (mediaChanged) {
+    logger.info("Media element changed on current page.");
+  }
+
+  lastBoundMedia = media;
+  syncPanel();
+}
+
 const loopController = new LoopController(({ range, errorMessage, currentTime }) => {
   panelState.startTime = range.startTime;
   panelState.endTime = range.endTime;
@@ -90,141 +225,15 @@ const panel = new FloatingPanel(initialState, {
     renderPanel();
   },
   onClosePanel: async () => {
-    loopController.clear();
-
-    panelState.startTime = null;
-    panelState.endTime = null;
-    panelState.enabled = false;
-    panelState.errorMessage = null;
-
-    looplockEnabled = false;
-    floatingPanelVisible = false;
-
     try {
-      await saveLooplockEnabled(false);
-      await savePanelVisible(false);
+      await closeLooplockSession();
     } catch (error) {
-      logger.warn("Failed to persist close-panel state:", error);
+      logger.warn("Failed to close LoopLock session:", error);
     }
-
-    renderPanel();
   }
 });
 
 panel.mount();
-
-function renderPanel(): void {
-  const shouldShow = looplockEnabled && floatingPanelVisible;
-  const root = document.getElementById("looplock-root");
-
-  if (root) {
-    root.style.display = shouldShow ? "block" : "none";
-  }
-
-  panel.setTheme(themeMode);
-
-  if (shouldShow) {
-    panel.update(panelState);
-  }
-}
-
-function resetLoopStateForNewPage(nextPageKey: string, nextUrl: string): void {
-  logger.info("Resetting loop state for new page.", {
-    fromPageKey: currentPageKey,
-    toPageKey: nextPageKey,
-    fromUrl: lastKnownUrl,
-    toUrl: nextUrl
-  });
-
-  loopController.clear();
-  loopController.attachMedia(null);
-
-  panelState.startTime = null;
-  panelState.endTime = null;
-  panelState.enabled = false;
-  panelState.errorMessage = null;
-  panelState.currentTime = 0;
-  panelState.mediaDetected = false;
-
-  currentPageKey = nextPageKey;
-  lastKnownUrl = nextUrl;
-  lastBoundMedia = null;
-
-  renderPanel();
-}
-
-async function bindMedia(retryCount = 0): Promise<void> {
-  const media = detectPrimaryMedia();
-
-  if (!media) {
-    loopController.attachMedia(null);
-    lastBoundMedia = null;
-    syncPanel();
-
-    if (retryCount < 12) {
-      window.setTimeout(() => {
-        void bindMedia(retryCount + 1);
-      }, 400);
-    }
-
-    return;
-  }
-
-  const mediaChanged = lastBoundMedia !== null && media !== lastBoundMedia;
-
-  loopController.attachMedia(media);
-
-  if (mediaChanged) {
-    logger.info("Media element changed on current page.");
-  }
-
-  lastBoundMedia = media;
-  syncPanel();
-}
-
-function syncPanel(): void {
-  const media = loopController.getMedia();
-  const range = loopController.getRange();
-  const errorMessage = loopController.getErrorMessage();
-  const currentTime = loopController.getCurrentTime();
-
-  panelState.mediaDetected = !!media;
-  panelState.currentTime = currentTime;
-  panelState.startTime = range.startTime;
-  panelState.endTime = range.endTime;
-  panelState.enabled = range.enabled;
-  panelState.errorMessage = errorMessage;
-  panelState.siteType = isYouTubePage() ? "youtube" : "generic";
-
-  renderPanel();
-}
-
-async function setLooplockEnabled(next: boolean): Promise<void> {
-  looplockEnabled = next;
-  await saveLooplockEnabled(next);
-
-  if (!next) {
-    floatingPanelVisible = false;
-    await savePanelVisible(false);
-    loopController.clear();
-    panelState.startTime = null;
-    panelState.endTime = null;
-    panelState.enabled = false;
-    panelState.errorMessage = null;
-  }
-
-  renderPanel();
-}
-
-async function setPanelVisible(next: boolean): Promise<void> {
-  if (!looplockEnabled && next) {
-    return;
-  }
-
-  floatingPanelVisible = next;
-  await savePanelVisible(next);
-  renderPanel();
-}
 
 function buildStatusResponse(): PopupStatusResponse {
   return {
@@ -246,20 +255,21 @@ function installMessageHandler(): void {
           return;
 
         case "OPEN_LOOPLOCK":
-          await setLooplockEnabled(true);
-          await setPanelVisible(true);
+          await openLooplockSession();
           sendResponse(buildStatusResponse());
           return;
 
         case "SHOW_PANEL":
-          await setPanelVisible(true);
+          if (looplockEnabled) {
+            floatingPanelVisible = true;
+            await savePanelVisible(true);
+            renderPanel();
+          }
           sendResponse(buildStatusResponse());
           return;
 
         case "SET_THEME":
-          themeMode = message.themeMode;
-          await saveThemeMode(themeMode);
-          renderPanel();
+          await applyTheme(message.themeMode);
           sendResponse(buildStatusResponse());
           return;
 
@@ -283,6 +293,7 @@ async function initialize(): Promise<void> {
       floatingPanelVisible = false;
     }
 
+    updateSiteType();
     renderPanel();
     await bindMedia();
   } catch (error) {
