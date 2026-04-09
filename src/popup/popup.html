@@ -82,52 +82,64 @@
 
           <div class="settings-card">
             <div class="settings-section-title">Keyboard Shortcuts</div>
-            <div class="settings-note">
-              Keyboard shortcuts are planned as an advanced feature and are
-              <strong>off by default</strong>.
-            </div>
+
+            <label class="toggle-row" for="shortcut-enabled-toggle">
+              <span class="toggle-copy">
+                <span class="toggle-title">Enable keyboard shortcuts</span>
+                <span class="toggle-subtitle">
+                  Off by default. Turn this on only if you want faster keyboard-based control.
+                </span>
+              </span>
+              <input id="shortcut-enabled-toggle" type="checkbox" />
+            </label>
           </div>
 
           <div class="settings-card">
-            <div class="settings-section-title">Planned Default Mapping</div>
+            <div class="settings-section-title">Shortcut Mapping</div>
 
             <div class="settings-grid">
-              <div class="settings-field">
+              <label class="settings-field">
                 <span class="settings-field-label">Toggle shortcut mode</span>
-                <div class="settings-static-value">Alt+G</div>
-              </div>
+                <input id="shortcut-toggle-enabled-input" class="settings-input" type="text" />
+              </label>
 
-              <div class="settings-field">
+              <label class="settings-field">
                 <span class="settings-field-label">Set A</span>
-                <div class="settings-static-value">Alt+A</div>
-              </div>
+                <input id="shortcut-set-start-input" class="settings-input" type="text" />
+              </label>
 
-              <div class="settings-field">
+              <label class="settings-field">
                 <span class="settings-field-label">Set B</span>
-                <div class="settings-static-value">Alt+S</div>
-              </div>
+                <input id="shortcut-set-end-input" class="settings-input" type="text" />
+              </label>
 
-              <div class="settings-field">
+              <label class="settings-field">
                 <span class="settings-field-label">Toggle Loop</span>
-                <div class="settings-static-value">Alt+D</div>
-              </div>
+                <input id="shortcut-toggle-loop-input" class="settings-input" type="text" />
+              </label>
 
-              <div class="settings-field">
+              <label class="settings-field">
                 <span class="settings-field-label">Clear</span>
-                <div class="settings-static-value">Alt+F</div>
-              </div>
+                <input id="shortcut-clear-input" class="settings-input" type="text" />
+              </label>
+            </div>
+
+            <div class="settings-note">
+              Use combinations such as <strong>Alt+A</strong>. Avoid single-key shortcuts to reduce conflicts with YouTube controls.
             </div>
           </div>
 
           <div class="settings-card">
             <div class="settings-section-title">Notes</div>
             <div class="settings-note">
-              This page is currently a safe UI skeleton. Settings persistence and
-              actual keyboard shortcut behavior will be added in later steps.
+              Shortcut settings are now saved locally. Actual keyboard shortcut behavior will be added in the next step.
             </div>
           </div>
 
-          <div class="popup-actions settings-actions">
+          <div class="popup-actions two-column-actions">
+            <button id="reset-shortcuts-btn" class="secondary-btn" type="button">
+              Reset Defaults
+            </button>
             <button id="back-to-main-btn" class="primary-btn" type="button">
               Back
             </button>

@@ -2,7 +2,75 @@ import type { ContentMessage, PopupStatusResponse, ThemeMode } from "../shared/t
 
 type PopupView = "main" | "settings";
 
+interface ShortcutSettings {
+  enabled: boolean;
+  toggleEnabledShortcut: string;
+  setStartShortcut: string;
+  setEndShortcut: string;
+  toggleLoopShortcut: string;
+  clearShortcut: string;
+}
+
+const SHORTCUT_SETTINGS_STORAGE_KEY = "looplock:popup:shortcutSettings";
+
 let currentView: PopupView = "main";
+let shortcutSettings: ShortcutSettings = getDefaultShortcutSettings();
+
+function getDefaultShortcutSettings(): ShortcutSettings {
+  return {
+    enabled: false,
+    toggleEnabledShortcut: "Alt+G",
+    setStartShortcut: "Alt+A",
+    setEndShortcut: "Alt+S",
+    toggleLoopShortcut: "Alt+D",
+    clearShortcut: "Alt+F"
+  };
+}
+
+function loadShortcutSettingsFromLocal(): ShortcutSettings {
+  try {
+    const raw = window.localStorage.getItem(SHORTCUT_SETTINGS_STORAGE_KEY);
+    if (!raw) return getDefaultShortcutSettings();
+
+    const parsed = JSON.parse(raw) as Partial<ShortcutSettings>;
+    const defaults = getDefaultShortcutSettings();
+
+    return {
+      enabled: typeof parsed.enabled === "boolean" ? parsed.enabled : defaults.enabled,
+      toggleEnabledShortcut:
+        typeof parsed.toggleEnabledShortcut === "string" && parsed.toggleEnabledShortcut.trim()
+          ? parsed.toggleEnabledShortcut.trim()
+          : defaults.toggleEnabledShortcut,
+      setStartShortcut:
+        typeof parsed.setStartShortcut === "string" && parsed.setStartShortcut.trim()
+          ? parsed.setStartShortcut.trim()
+          : defaults.setStartShortcut,
+      setEndShortcut:
+        typeof parsed.setEndShortcut === "string" && parsed.setEndShortcut.trim()
+          ? parsed.setEndShortcut.trim()
+          : defaults.setEndShortcut,
+      toggleLoopShortcut:
+        typeof parsed.toggleLoopShortcut === "string" && parsed.toggleLoopShortcut.trim()
+          ? parsed.toggleLoopShortcut.trim()
+          : defaults.toggleLoopShortcut,
+      clearShortcut:
+        typeof parsed.clearShortcut === "string" && parsed.clearShortcut.trim()
+          ? parsed.clearShortcut.trim()
+          : defaults.clearShortcut
+    };
+  } catch (error) {
+    console.warn("Failed to load popup shortcut settings from localStorage.", error);
+    return getDefaultShortcutSettings();
+  }
+}
+
+function saveShortcutSettingsToLocal(settings: ShortcutSettings): void {
+  try {
+    window.localStorage.setItem(SHORTCUT_SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+  } catch (error) {
+    console.warn("Failed to save popup shortcut settings to localStorage.", error);
+  }
+}
 
 function getActiveTab(): Promise<chrome.tabs.Tab | null> {
   return new Promise((resolve) => {
@@ -92,6 +160,58 @@ function setView(nextView: PopupView): void {
 
   mainView.classList.toggle("hidden-view", currentView !== "main");
   settingsView.classList.toggle("hidden-view", currentView !== "settings");
+}
+
+function normalizeShortcutInput(value: string): string {
+  const normalized = value.replace(/\s+/g, "").trim();
+  return normalized.length > 0 ? normalized : "Alt+?";
+}
+
+function populateShortcutForm(settings: ShortcutSettings): void {
+  const enabledToggle = document.getElementById("shortcut-enabled-toggle") as HTMLInputElement | null;
+  const toggleEnabledInput = document.getElementById("shortcut-toggle-enabled-input") as HTMLInputElement | null;
+  const setStartInput = document.getElementById("shortcut-set-start-input") as HTMLInputElement | null;
+  const setEndInput = document.getElementById("shortcut-set-end-input") as HTMLInputElement | null;
+  const toggleLoopInput = document.getElementById("shortcut-toggle-loop-input") as HTMLInputElement | null;
+  const clearInput = document.getElementById("shortcut-clear-input") as HTMLInputElement | null;
+
+  if (enabledToggle) enabledToggle.checked = settings.enabled;
+  if (toggleEnabledInput) toggleEnabledInput.value = settings.toggleEnabledShortcut;
+  if (setStartInput) setStartInput.value = settings.setStartShortcut;
+  if (setEndInput) setEndInput.value = settings.setEndShortcut;
+  if (toggleLoopInput) toggleLoopInput.value = settings.toggleLoopShortcut;
+  if (clearInput) clearInput.value = settings.clearShortcut;
+}
+
+function persistShortcutSettingsFromForm(): void {
+  try {
+    const enabledToggle = document.getElementById("shortcut-enabled-toggle") as HTMLInputElement | null;
+    const toggleEnabledInput = document.getElementById("shortcut-toggle-enabled-input") as HTMLInputElement | null;
+    const setStartInput = document.getElementById("shortcut-set-start-input") as HTMLInputElement | null;
+    const setEndInput = document.getElementById("shortcut-set-end-input") as HTMLInputElement | null;
+    const toggleLoopInput = document.getElementById("shortcut-toggle-loop-input") as HTMLInputElement | null;
+    const clearInput = document.getElementById("shortcut-clear-input") as HTMLInputElement | null;
+
+    shortcutSettings = {
+      enabled: enabledToggle?.checked ?? false,
+      toggleEnabledShortcut: normalizeShortcutInput(toggleEnabledInput?.value ?? shortcutSettings.toggleEnabledShortcut),
+      setStartShortcut: normalizeShortcutInput(setStartInput?.value ?? shortcutSettings.setStartShortcut),
+      setEndShortcut: normalizeShortcutInput(setEndInput?.value ?? shortcutSettings.setEndShortcut),
+      toggleLoopShortcut: normalizeShortcutInput(toggleLoopInput?.value ?? shortcutSettings.toggleLoopShortcut),
+      clearShortcut: normalizeShortcutInput(clearInput?.value ?? shortcutSettings.clearShortcut)
+    };
+
+    saveShortcutSettingsToLocal(shortcutSettings);
+    populateShortcutForm(shortcutSettings);
+  } catch (error) {
+    console.warn("Failed to persist popup shortcut settings.", error);
+  }
+}
+
+function resetShortcutSettingsToDefault(): void {
+  shortcutSettings = getDefaultShortcutSettings();
+  saveShortcutSettingsToLocal(shortcutSettings);
+  populateShortcutForm(shortcutSettings);
 }
 
 async function sendMessageToActiveTab(message: ContentMessage): Promise<PopupStatusResponse | null> {
@@ -214,6 +334,30 @@ async function runAction(message: ContentMessage): Promise<void> {
   renderStatus(status, supported);
 }
 
+function bindShortcutSettingsEvents(): void {
+  document.getElementById("shortcut-enabled-toggle")?.addEventListener("change", () => {
+    persistShortcutSettingsFromForm();
+  });
+
+  const inputIds = [
+    "shortcut-toggle-enabled-input",
+    "shortcut-set-start-input",
+    "shortcut-set-end-input",
+    "shortcut-toggle-loop-input",
+    "shortcut-clear-input"
+  ];
+
+  for (const id of inputIds) {
+    document.getElementById(id)?.addEventListener("change", () => {
+      persistShortcutSettingsFromForm();
+    });
+  }
+
+  document.getElementById("reset-shortcuts-btn")?.addEventListener("click", () => {
+    resetShortcutSettingsToDefault();
+  });
+}
+
 function bindEvents(): void {
   document.getElementById("open-looplock-btn")?.addEventListener("click", async () => {
     const currentButtonText =
@@ -242,11 +386,17 @@ function bindEvents(): void {
   document.getElementById("back-to-main-btn")?.addEventListener("click", () => {
     setView("main");
   });
+
+  bindShortcutSettingsEvents();
 }
 
 function initializePopup(): void {
   setView("main");
   bindEvents();
+
+  shortcutSettings = loadShortcutSettingsFromLocal();
+  populateShortcutForm(shortcutSettings);
+
   void refreshStatus();
 }
 
