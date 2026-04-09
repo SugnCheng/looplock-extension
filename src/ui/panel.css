@@ -1,0 +1,112 @@
+#looplock-root {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 2147483647;
+  font-family: Arial, sans-serif;
+}
+
+.looplock-panel {
+  width: 240px;
+  background: rgba(24, 24, 28, 0.92);
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+  padding: 12px;
+  backdrop-filter: blur(8px);
+}
+
+.looplock-panel.collapsed {
+  width: 220px;
+}
+
+.looplock-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.looplock-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.looplock-title {
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.looplock-status {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 999px;
+}
+
+.looplock-status.ok {
+  background: rgba(46, 204, 113, 0.2);
+  color: #7dffb0;
+}
+
+.looplock-status.off {
+  background: rgba(231, 76, 60, 0.2);
+  color: #ff9f91;
+}
+
+.looplock-collapse-btn {
+  width: 24px;
+  height: 24px;
+  border: none;
+  border-radius: 6px;
+  background: #2d2f38;
+  color: white;
+  cursor: pointer;
+}
+
+.looplock-collapse-btn:hover {
+  background: #3a3d48;
+}
+
+.looplock-now {
+  margin-bottom: 8px;
+  font-size: 13px;
+}
+
+.looplock-times {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 10px;
+  font-size: 13px;
+}
+
+.looplock-error {
+  margin-bottom: 10px;
+  padding: 8px;
+  border-radius: 8px;
+  background: rgba(231, 76, 60, 0.18);
+  color: #ffb3a9;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.looplock-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.looplock-actions button {
+  border: none;
+  border-radius: 8px;
+  padding: 8px 10px;
+  cursor: pointer;
+  background: #2d2f38;
+  color: #fff;
+  font-size: 12px;
+}
+
+.looplock-actions button:hover {
+  background: #3a3d48;
+}

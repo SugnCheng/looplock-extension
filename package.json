@@ -1,0 +1,16 @@
+{
+  "name": "looplock-extension",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite build --watch",
+    "build": "vite build"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.292",
+    "@types/node": "^25.5.2",
+    "typescript": "^5.9.3",
+    "vite": "^5.4.21"
+  }
+}
