@@ -26,10 +26,12 @@ Current direction is intentionally focused:
 LoopLock is currently in a **YouTube-first MVP Alpha** stage.
 
 Current priorities:
-- keep popup/session flow stable
-- improve shortcut UX in small safe steps
-- strengthen project presentation and documentation
-- avoid risky rewrites that could break the main interaction flow
+- keep the popup and session flow stable
+- improve shortcut UX through small, low-risk iterations
+- continue polishing documentation and project presentation
+- avoid broad expansion until the core YouTube watch-page experience is fully reliable
+
+This project is intentionally being developed with a **stability-first** approach.
 
 ---
 
@@ -82,12 +84,14 @@ LoopLock’s floating panel lets users set A/B points, toggle loop playback, cle
 ### Runtime Shortcut Sync
 The popup surfaces current shortcut status, runtime sync state, and shortcut mode visibility for the active tab.
 
-![Shortcut Runtime Sync](docs/demo-shortcut-runtime-sync.png.png)
+![Shortcut Runtime Sync](docs/demo-shortcut-runtime-sync.png)
 
 ### Shortcut Conflict Feedback
 Conflicting shortcut mappings are highlighted inline with direct field-level warnings for better clarity.
 
-![Shortcut Conflict Warning](docs/demo-popup-settings-conflict.png.png)
+![Shortcut Conflict Warning](docs/demo-popup-settings-conflict.png)
+
+Below are a few snapshots from the current MVP build, covering the popup entry flow, floating panel controls, runtime shortcut visibility, and inline shortcut conflict feedback.
 
 ---
 
@@ -202,7 +206,12 @@ Shortcut mappings can be customized in popup settings.
   - inline conflict warnings appear directly on those fields
 
 ### Current Stability Note
-Shortcut settings are intentionally handled conservatively to avoid breaking the main popup/session flow.
+Shortcut behavior is intentionally handled conservatively to avoid breaking the main popup, session, and floating-panel flow.
+
+The current design prioritizes:
+- stable page interaction
+- predictable focus behavior
+- safer incremental refinement over risky shortcut rewrites
 
 ---
 
