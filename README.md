@@ -1,5 +1,11 @@
 # LoopLock
 
+![Platform](https://img.shields.io/badge/platform-Chrome%20%2F%20Edge-4f46e5)
+![Stage](https://img.shields.io/badge/stage-MVP%20Alpha-22c55e)
+![Scope](https://img.shields.io/badge/scope-YouTube%20Watch%20Only-0ea5e9)
+![Manifest](https://img.shields.io/badge/manifest-v3-f59e0b)
+![Status](https://img.shields.io/badge/status-Active%20Development-ef4444)
+
 > A lightweight Chrome / Edge extension for setting and replaying custom A-B loop segments on YouTube watch pages.
 
 LoopLock is built for people who replay specific video moments again and again â€” especially:
@@ -12,6 +18,18 @@ LoopLock is built for people who replay specific video moments again and again â
 Current direction is intentionally focused:
 
 **Make the YouTube watch-page looping experience stable, clean, and product-like before expanding further.**
+
+---
+
+## Project Status
+
+LoopLock is currently in a **YouTube-first MVP Alpha** stage.
+
+Current priorities:
+- keep popup/session flow stable
+- improve shortcut UX in small safe steps
+- strengthen project presentation and documentation
+- avoid risky rewrites that could break the main interaction flow
 
 ---
 
