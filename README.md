@@ -71,27 +71,41 @@ This project is currently in a **YouTube-first MVP Alpha** stage.
 
 ## Demo / Screenshots
 
-### Popup Main View
-The popup acts as the official entry point for the LoopLock session.
+LoopLock’s current MVP flow is intentionally simple:
+
+1. Open the popup on a YouTube watch page
+2. Start the session with **Open LoopLock**
+3. Control A/B looping through the floating panel
+4. Optionally enable and customize keyboard shortcuts in Settings
+
+### 1. Popup Entry
+
+The popup is the official entry point for LoopLock.  
+It shows current page support, LoopLock status, panel visibility, media detection, theme controls, and shortcut availability.
 
 ![Popup Main View](docs/demo-popup-main.png)
 
-### Floating Panel
-LoopLock’s floating panel lets users set A/B points, toggle loop playback, clear the current range, and keep the panel visible while watching.
+### 2. Floating Panel Control
+
+Once the session is opened, the floating panel becomes the main control surface for playback looping.  
+Users can set A/B points, toggle loop playback, clear the current range, collapse the panel, or close the entire session with **✕**.
 
 ![Floating Panel](docs/demo-floating-panel.png)
 
-### Runtime Shortcut Sync
-The popup surfaces current shortcut status, runtime sync state, and shortcut mode visibility for the active tab.
+### 3. Shortcut Settings
+
+Keyboard shortcuts are optional and intentionally conservative in the current MVP.  
+Users can enable them manually, customize mappings, and review the shortcut layout from popup settings.
 
 ![Shortcut Runtime Sync](docs/demo-shortcut-runtime-sync.png)
 
-### Shortcut Conflict Feedback
-Conflicting shortcut mappings are highlighted inline with direct field-level warnings for better clarity.
+### 4. Conflict Feedback
+
+If two actions are assigned the same shortcut, LoopLock surfaces the problem directly in settings with inline warnings and field-level conflict highlighting.
 
 ![Shortcut Conflict Warning](docs/demo-popup-settings-conflict.png)
 
-Below are a few snapshots from the current MVP build, covering the popup entry flow, floating panel controls, runtime shortcut visibility, and inline shortcut conflict feedback.
+These screenshots reflect the current YouTube-first MVP build and focus on the project’s main interaction flow rather than future expansion areas.
 
 ---
 
