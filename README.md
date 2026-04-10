@@ -1,54 +1,120 @@
 # LoopLock
 
-LoopLock is a Chrome / Edge extension for looping a custom A-B segment on YouTube videos.
+> A lightweight Chrome / Edge extension for setting and replaying custom A-B loop segments on YouTube watch pages.
 
-It is designed for:
+LoopLock is built for people who replay specific video moments again and again — especially:
+
 - ASMR listeners
 - language learners
-- anyone who needs to replay a specific section repeatedly
+- music and audio repeat users
+- anyone reviewing short clips or spoken phrases repeatedly
 
-Current product focus is a stable and polished **YouTube watch page MVP**.
+Current direction is intentionally focused:
+
+**Make the YouTube watch-page looping experience stable, clean, and product-like before expanding further.**
+
+---
+
+## Overview
+
+LoopLock lets you:
+
+- set an **A point**
+- set a **B point**
+- loop only that segment
+- control the session through a compact floating panel
+- optionally use keyboard shortcuts for faster operation
+
+This project is currently in a **YouTube-first MVP Alpha** stage.
+
+---
+
+## Highlights
+
+- **Popup-first product flow**  
+  LoopLock starts from the extension popup instead of auto-injecting itself into every page interaction.
+
+- **Clean floating panel UX**  
+  Compact, draggable, collapsible, and designed to feel like a real product instead of a rough dev tool overlay.
+
+- **Safe session model**  
+  New YouTube video = new loop session.  
+  Pause does not destroy your A/B points.
+
+- **Theme sync**  
+  Popup and floating panel stay aligned in dark / light mode.
+
+- **Optional shortcuts**  
+  Keyboard shortcuts are configurable, but intentionally conservative for stability.
+
+---
+
+## Demo / Screenshots
+
+### Popup Main View
+The popup acts as the official entry point for the LoopLock session.
+
+![Popup Main View](docs/demo-popup-main.png)
+
+### Floating Panel
+LoopLock’s floating panel lets users set A/B points, toggle loop playback, clear the current range, and keep the panel visible while watching.
+
+![Floating Panel](docs/demo-floating-panel.png)
+
+### Runtime Shortcut Sync
+The popup surfaces current shortcut status, runtime sync state, and shortcut mode visibility for the active tab.
+
+![Shortcut Runtime Sync](docs/demo-shortcut-runtime-sync.png.png)
+
+### Shortcut Conflict Feedback
+Conflicting shortcut mappings are highlighted inline with direct field-level warnings for better clarity.
+
+![Shortcut Conflict Warning](docs/demo-popup-settings-conflict.png.png)
 
 ---
 
 ## Current Scope
 
-LoopLock currently supports:
+### Supported
+- YouTube watch pages
+- Manual A-B loop setup
+- Popup-driven session start
+- Floating control panel
+- Dark / light theme sync
+- Persistent floating panel position
+- Optional keyboard shortcuts
+- Inline shortcut conflict warnings in settings
 
-- YouTube watch pages only
-- manual A-B loop setup
-- popup-driven session start
-- floating control panel
-- dark / light theme sync
-- draggable panel position persistence
-- optional keyboard shortcuts
-
-LoopLock does **not** currently target:
-- generic HTML5 players
+### Not Supported Yet
+- Generic HTML5 video players
 - Bilibili
-- universal site-wide media support
+- Universal multi-site support
+- Dedicated options page
+- Advanced loop analytics or timeline widgets
 
 ---
 
-## Core Features
+## Feature Set
 
-### A-B Loop Controls
-- Set **A**
-- Set **B**
-- Toggle **Loop On / Off**
-- **Clear** current range
+### Core Loop Controls
+- **Set A**
+- **Set B**
+- **Toggle Loop**
+- **Clear**
 
-### Session Behavior
-- LoopLock does **not** auto-start on page load
-- Floating panel does **not** auto-open on page load
-- User starts a session from the extension popup
-- Closing the floating panel with **✕** exits the current LoopLock session
+### Session Lifecycle
+- LoopLock does **not** auto-start when a page opens
+- Floating panel does **not** auto-open by default
+- User explicitly starts the session from popup
+- Closing with **✕** exits the whole LoopLock session
 
-### YouTube Navigation Reset
-When switching to a different YouTube video, LoopLock treats it as a new session and resets:
+### Video Change Behavior
+When a different YouTube video loads, LoopLock resets:
 - A point
 - B point
 - Loop state
+
+This is intentional and treated as a new session.
 
 ### Pause Behavior
 Pausing the video does **not** reset:
@@ -60,137 +126,86 @@ Pausing the video does **not** reset:
 - draggable
 - collapsible
 - compact layout
-- position persists across sessions
+- persistent saved position
 
 ### Theme
-- dark mode
-- light mode
+- Dark mode
+- Light mode
 
 Popup and floating panel stay synchronized.
 
 ---
 
-## How It Works
+## Usage
 
 ### Start LoopLock
 1. Open a YouTube watch page
-2. Click the browser extension icon
+2. Click the extension icon
 3. Click **Open LoopLock**
 
-This will:
-- enable LoopLock
-- open the floating panel
+This enables LoopLock and opens the floating panel.
 
 ### Close LoopLock
-Use the **✕** button on the floating panel.
+Click **✕** on the floating panel.
 
-This does **not** just hide the panel. It exits the current LoopLock session and clears the current loop state.
+This is not just a visual hide action — it exits the current LoopLock session.
+
+### Set a Loop
+1. Play or scrub to the desired start point
+2. Click **Set A**
+3. Move to the desired end point
+4. Click **Set B**
+5. Toggle loop on
 
 ---
 
 ## Keyboard Shortcuts
 
-Keyboard shortcuts are currently an optional feature.
-
-### Default Behavior
-Keyboard shortcuts are **Off by default**.
+Keyboard shortcuts are optional and **Off by default**.
 
 You must enable them manually in **Settings**.
 
-### Default Shortcut Mapping
+### Default Mapping
 - `Alt+G` → Toggle shortcut mode
 - `Alt+A` → Set A
 - `Alt+S` → Set B
 - `Alt+D` → Toggle Loop
 - `Alt+F` → Clear
 
-### Custom Shortcut Mapping
-Shortcut mappings can be customized in the popup settings UI.
+### Custom Mapping
+Shortcut mappings can be customized in popup settings.
 
-### Important Shortcut Notes
-- Shortcuts work only when the **YouTube page is focused**
-- If the **extension popup is focused**, page-level shortcuts will not trigger
-- Clearing a shortcut field restores it to its default mapping
-- If two shortcut actions conflict, the related fields are highlighted with:
-  - red border
-  - inline conflict warning
+### Shortcut Rules
+- Shortcuts only work when the **YouTube page itself is focused**
+- If the **extension popup is focused**, page-level shortcuts will not fire
+- Clearing a shortcut field restores it to the default value
+- If two actions are assigned the same shortcut:
+  - the conflicting fields are highlighted
+  - inline conflict warnings appear directly on those fields
 
-### Shortcut Runtime Notes
-Popup settings are stored locally in the popup layer first for stability.
-
-Current runtime behavior is intentionally conservative to avoid breaking the main popup/session flow.
+### Current Stability Note
+Shortcut settings are intentionally handled conservatively to avoid breaking the main popup/session flow.
 
 ---
 
-## Current UX Rules
+## UX Rules
 
-These behaviors are intentionally part of the product design:
+These are currently intentional product rules:
 
-- popup is the primary entry point
+- popup is the official entry point
 - floating panel is not always-on by default
-- no auto-open on page load
 - no auto-enable on page load
-- video change resets loop state
+- no auto-open on page load
+- new video resets loop state
 - pause does not reset loop state
-- theme sync must stay consistent between popup and panel
-- floating panel update logic should avoid full DOM rebuilds after mount
+- theme sync must remain consistent between popup and floating panel
+- floating panel should update without destructive full DOM rebuilds after mount
 
 ---
 
-## Tech Stack
+## Installation
 
-- TypeScript
-- Vite
-- Chrome Extension Manifest V3
-
-Project structure currently centers around:
-
-- `src/content/` — content script and page logic
-- `src/ui/` — floating panel UI
-- `src/popup/` — popup UI and settings
-- `src/storage/` — extension storage helpers
-- `src/shared/` — shared types, constants, logger
-
----
-
-## Current Development Status
-
-Current product stage:
-
-**YouTube watch page MVP Alpha / v0.2.x**
-
-Recent stable areas include:
-- popup as official entry point
-- productized popup UI
-- floating panel improvements
-- panel position persistence
-- safe shortcut settings persistence in popup-local storage
-- inline shortcut conflict feedback
-
----
-
-## Known Product Constraints
-
-These are known and currently acceptable constraints:
-
-- popup focus disables page-level shortcuts
-- shortcut settings are intentionally handled conservatively for stability
-- YouTube-only support for now
-- generic media support is out of scope at this stage
-
----
-
-## Development Priorities
-
-Near-term priorities:
-1. keep main session flow stable
-2. improve shortcut UX carefully in small steps
-3. improve README / demo / project presentation
-4. continue shipping only low-risk increments
-
----
-
-## Installation (Dev)
+### Development Setup
 
 ```bash
 npm install
