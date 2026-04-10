@@ -349,6 +349,12 @@ function setText(id: string, value: string): void {
   }
 }
 
+function setElementVisible(id: string, visible: boolean): void {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.style.display = visible ? "" : "none";
+}
+
 function applyPopupTheme(themeMode: ThemeMode): void {
   document.body.dataset.theme = themeMode;
 }
@@ -435,6 +441,16 @@ function populateShortcutForm(settings: ShortcutSettings): void {
   if (clearInput) clearInput.value = settings.clearShortcut;
 }
 
+function renderShortcutCardVisibility(): void {
+  const enabled = shortcutSettings.enabled;
+
+  setElementVisible("shortcut-disabled-note", !enabled);
+  setElementVisible("shortcut-mode-row", enabled);
+  setElementVisible("shortcut-toggle-row", enabled);
+  setElementVisible("shortcut-ab-row", enabled);
+  setElementVisible("shortcut-loop-clear-row", enabled);
+}
+
 function renderShortcutSummary(): void {
   setText("shortcut-enabled-status", shortcutSettings.enabled ? "Enabled" : "Disabled");
   setText("shortcut-toggle-enabled-summary", shortcutSettings.toggleEnabledShortcut || "-");
@@ -446,9 +462,16 @@ function renderShortcutSummary(): void {
     "shortcut-loop-clear-summary",
     `${shortcutSettings.toggleLoopShortcut || "-"} / ${shortcutSettings.clearShortcut || "-"}`
   );
+
+  renderShortcutCardVisibility();
 }
 
 function renderShortcutRuntimeState(status: PopupStatusResponse | null, tabSupported: boolean): void {
+  if (!shortcutSettings.enabled) {
+    setText("shortcut-runtime-mode-status", "Off");
+    return;
+  }
+
   if (!tabSupported) {
     setText("shortcut-runtime-mode-status", "N/A");
     return;
