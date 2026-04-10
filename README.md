@@ -215,6 +215,42 @@ The current design prioritizes:
 
 ---
 
+## Known Behaviors / Current Product Rules
+
+The following behaviors are currently intentional and should not be treated as bugs unless the product direction changes:
+
+- **Popup is the official entry point**  
+  LoopLock does not auto-start on page load and does not auto-open the floating panel by default.
+
+- **Floating panel close (✕) exits the full session**  
+  This action is not just a visual hide. It closes the current LoopLock session and clears current loop state.
+
+- **New YouTube video = new session context**  
+  When the YouTube video changes, LoopLock resets A/B points and loop state intentionally.
+
+- **Pause does not reset loop state**  
+  Pausing playback should not clear A, B, or the current loop-enabled state.
+
+- **Shortcuts are optional and conservative by design**  
+  Keyboard shortcuts are Off by default and must be enabled manually from popup settings.
+
+- **Shortcut settings are currently popup-local**  
+  Shortcut configuration is intentionally kept isolated from shared storage integration for stability during the current MVP phase.
+
+- **Page shortcuts only fire when the page itself has focus**  
+  If the extension popup is focused, page-level shortcuts will not trigger. This is a currently accepted product behavior.
+
+- **Clearing a shortcut field restores its default value**  
+  Empty shortcut inputs are normalized back to the current default mapping instead of remaining blank.
+
+- **Conflict warnings are informational and local to popup settings**  
+  Shortcut conflicts are surfaced through field-level warnings and visual highlighting, without changing the core session model.
+
+- **Floating panel updates should remain non-destructive after mount**  
+  The panel is expected to mount once and update in place, rather than being repeatedly rebuilt from scratch.
+
+---
+
 ## UX Rules
 
 These are currently intentional product rules:
