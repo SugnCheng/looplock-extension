@@ -323,6 +323,19 @@ function populateShortcutForm(settings: ShortcutSettings): void {
   if (clearInput) clearInput.value = settings.clearShortcut;
 }
 
+function renderShortcutSummary(): void {
+  setText("shortcut-enabled-status", shortcutSettings.enabled ? "Enabled" : "Disabled");
+  setText("shortcut-toggle-enabled-summary", shortcutSettings.toggleEnabledShortcut || "-");
+  setText(
+    "shortcut-ab-summary",
+    `${shortcutSettings.setStartShortcut || "-"} / ${shortcutSettings.setEndShortcut || "-"}`
+  );
+  setText(
+    "shortcut-loop-clear-summary",
+    `${shortcutSettings.toggleLoopShortcut || "-"} / ${shortcutSettings.clearShortcut || "-"}`
+  );
+}
+
 async function sendMessageToActiveTab(message: ContentMessage): Promise<PopupStatusResponse | null> {
   const tab = await getActiveTab();
   if (!tab?.id) return null;
@@ -355,6 +368,7 @@ function persistShortcutSettings(): void {
   shortcutSettings = sanitizeShortcutSettings(shortcutSettings);
   saveShortcutSettingsToLocal(shortcutSettings);
   populateShortcutForm(shortcutSettings);
+  renderShortcutSummary();
   void syncShortcutSettingsToActiveTab();
 }
 
@@ -362,6 +376,7 @@ function resetShortcutSettingsToDefault(): void {
   shortcutSettings = getDefaultShortcutSettings();
   saveShortcutSettingsToLocal(shortcutSettings);
   populateShortcutForm(shortcutSettings);
+  renderShortcutSummary();
   void syncShortcutSettingsToActiveTab();
 }
 
@@ -590,10 +605,12 @@ function initializePopup(): void {
   try {
     shortcutSettings = loadShortcutSettingsFromLocal();
     populateShortcutForm(shortcutSettings);
+    renderShortcutSummary();
   } catch (error) {
     console.warn("Failed to initialize shortcut settings.", error);
     shortcutSettings = getDefaultShortcutSettings();
     populateShortcutForm(shortcutSettings);
+    renderShortcutSummary();
   }
 
   void refreshStatus();

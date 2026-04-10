@@ -56,6 +56,25 @@
             </div>
           </div>
 
+          <div class="popup-status-card">
+            <div class="status-row">
+              <span class="status-label">Shortcuts</span>
+              <span class="status-value" id="shortcut-enabled-status">Checking...</span>
+            </div>
+            <div class="status-row">
+              <span class="status-label">Mode Toggle</span>
+              <span class="status-value" id="shortcut-toggle-enabled-summary">-</span>
+            </div>
+            <div class="status-row">
+              <span class="status-label">Set A / B</span>
+              <span class="status-value" id="shortcut-ab-summary">-</span>
+            </div>
+            <div class="status-row">
+              <span class="status-label">Loop / Clear</span>
+              <span class="status-value" id="shortcut-loop-clear-summary">-</span>
+            </div>
+          </div>
+
           <div class="popup-actions two-column-actions">
             <button id="open-looplock-btn" class="primary-btn">
               Open LoopLock
@@ -132,7 +151,7 @@
           <div class="settings-card">
             <div class="settings-section-title">Notes</div>
             <div class="settings-note">
-              Shortcut settings are now saved locally. Actual keyboard shortcut behavior will be added in the next step.
+              Shortcut settings are saved locally in the popup. Runtime shortcut behavior is kept isolated from the main session flow for stability.
             </div>
           </div>
 
