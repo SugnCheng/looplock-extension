@@ -486,7 +486,8 @@ function buildStatusResponse(): PopupStatusResponse {
     mediaDetected: runtime.panelState.mediaDetected,
     themeMode: runtime.themeMode,
     shortcutSettingsEnabled: runtime.shortcutSettings.enabled,
-    shortcutModeActive: runtime.shortcutModeActive
+    shortcutModeActive: runtime.shortcutModeActive,
+    shortcutSettings: runtime.shortcutSettings
   };
 }
 

@@ -44,6 +44,7 @@ export interface PopupStatusResponse {
   themeMode: ThemeMode;
   shortcutSettingsEnabled: boolean;
   shortcutModeActive: boolean;
+  shortcutSettings: ShortcutSettings;
 }
 
 export type ContentMessage =

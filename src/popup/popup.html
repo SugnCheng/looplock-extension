@@ -62,6 +62,14 @@
               <span class="status-value" id="shortcut-enabled-status">Checking...</span>
             </div>
             <div class="status-row">
+              <span class="status-label">Runtime Sync</span>
+              <span class="status-value" id="shortcut-runtime-sync-status">Checking...</span>
+            </div>
+            <div class="status-row">
+              <span class="status-label">Shortcut Mode</span>
+              <span class="status-value" id="shortcut-runtime-mode-status">Checking...</span>
+            </div>
+            <div class="status-row">
               <span class="status-label">Mode Toggle</span>
               <span class="status-value" id="shortcut-toggle-enabled-summary">-</span>
             </div>
@@ -117,29 +125,34 @@
             <div class="settings-section-title">Shortcut Mapping</div>
 
             <div class="settings-grid">
-              <label class="settings-field">
+              <label class="settings-field" id="shortcut-toggle-enabled-field">
                 <span class="settings-field-label">Toggle shortcut mode</span>
                 <input id="shortcut-toggle-enabled-input" class="settings-input" type="text" />
+                <span class="settings-field-warning" id="shortcut-toggle-enabled-warning"></span>
               </label>
 
-              <label class="settings-field">
+              <label class="settings-field" id="shortcut-set-start-field">
                 <span class="settings-field-label">Set A</span>
                 <input id="shortcut-set-start-input" class="settings-input" type="text" />
+                <span class="settings-field-warning" id="shortcut-set-start-warning"></span>
               </label>
 
-              <label class="settings-field">
+              <label class="settings-field" id="shortcut-set-end-field">
                 <span class="settings-field-label">Set B</span>
                 <input id="shortcut-set-end-input" class="settings-input" type="text" />
+                <span class="settings-field-warning" id="shortcut-set-end-warning"></span>
               </label>
 
-              <label class="settings-field">
+              <label class="settings-field" id="shortcut-toggle-loop-field">
                 <span class="settings-field-label">Toggle Loop</span>
                 <input id="shortcut-toggle-loop-input" class="settings-input" type="text" />
+                <span class="settings-field-warning" id="shortcut-toggle-loop-warning"></span>
               </label>
 
-              <label class="settings-field">
+              <label class="settings-field" id="shortcut-clear-field">
                 <span class="settings-field-label">Clear</span>
                 <input id="shortcut-clear-input" class="settings-input" type="text" />
+                <span class="settings-field-warning" id="shortcut-clear-warning"></span>
               </label>
             </div>
 

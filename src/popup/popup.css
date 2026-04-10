@@ -361,3 +361,21 @@ body {
 .settings-input:focus {
   border-color: rgba(105, 121, 255, 0.55);
 }
+
+.settings-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.settings-field-warning {
+  min-height: 16px;
+  font-size: 11px;
+  line-height: 1.35;
+  color: #ef4444;
+}
+
+.settings-field-conflict .settings-input {
+  border-color: #ef4444 !important;
+  box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.22);
+}

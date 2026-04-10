@@ -197,6 +197,118 @@ function serializeKeyboardEvent(event: KeyboardEvent): string {
   return parts.join("+");
 }
 
+function normalizeShortcutSettings(settings: ShortcutSettings): ShortcutSettings {
+  return sanitizeShortcutSettings(settings);
+}
+
+function areShortcutSettingsEqual(a: ShortcutSettings, b: ShortcutSettings): boolean {
+  const left = normalizeShortcutSettings(a);
+  const right = normalizeShortcutSettings(b);
+
+  return (
+    left.enabled === right.enabled &&
+    left.toggleEnabledShortcut === right.toggleEnabledShortcut &&
+    left.setStartShortcut === right.setStartShortcut &&
+    left.setEndShortcut === right.setEndShortcut &&
+    left.toggleLoopShortcut === right.toggleLoopShortcut &&
+    left.clearShortcut === right.clearShortcut
+  );
+}
+
+function getShortcutEntries(settings: ShortcutSettings): Array<{
+  key: keyof ShortcutSettings;
+  label: string;
+  fieldId: string;
+  warningId: string;
+  value: string;
+}> {
+  return [
+    {
+      key: "toggleEnabledShortcut",
+      label: "Toggle shortcut mode",
+      fieldId: "shortcut-toggle-enabled-field",
+      warningId: "shortcut-toggle-enabled-warning",
+      value: settings.toggleEnabledShortcut
+    },
+    {
+      key: "setStartShortcut",
+      label: "Set A",
+      fieldId: "shortcut-set-start-field",
+      warningId: "shortcut-set-start-warning",
+      value: settings.setStartShortcut
+    },
+    {
+      key: "setEndShortcut",
+      label: "Set B",
+      fieldId: "shortcut-set-end-field",
+      warningId: "shortcut-set-end-warning",
+      value: settings.setEndShortcut
+    },
+    {
+      key: "toggleLoopShortcut",
+      label: "Toggle Loop",
+      fieldId: "shortcut-toggle-loop-field",
+      warningId: "shortcut-toggle-loop-warning",
+      value: settings.toggleLoopShortcut
+    },
+    {
+      key: "clearShortcut",
+      label: "Clear",
+      fieldId: "shortcut-clear-field",
+      warningId: "shortcut-clear-warning",
+      value: settings.clearShortcut
+    }
+  ];
+}
+
+function clearShortcutConflictUi(): void {
+  for (const entry of getShortcutEntries(shortcutSettings)) {
+    const field = document.getElementById(entry.fieldId);
+    const warning = document.getElementById(entry.warningId);
+
+    field?.classList.remove("settings-field-conflict");
+    if (warning) {
+      warning.textContent = "";
+    }
+  }
+}
+
+function renderShortcutConflictUi(): void {
+  clearShortcutConflictUi();
+
+  const entries = getShortcutEntries(shortcutSettings);
+  const groups = new Map<string, typeof entries>();
+
+  for (const entry of entries) {
+    const value = entry.value.trim();
+    if (!value) continue;
+
+    const existing = groups.get(value) ?? [];
+    existing.push(entry);
+    groups.set(value, existing);
+  }
+
+  for (const [, group] of groups.entries()) {
+    if (group.length <= 1) continue;
+
+    for (const entry of group) {
+      const conflictWith = group
+        .filter((item) => item.fieldId !== entry.fieldId)
+        .map((item) => item.label)
+        .join(", ");
+
+      const field = document.getElementById(entry.fieldId);
+      const warning = document.getElementById(entry.warningId);
+
+      field?.classList.add("settings-field-conflict");
+
+      if (warning) {
+        warning.textContent = `Conflicts with: ${conflictWith}`;
+      }
+    }
+  }
+}
+
 function loadShortcutSettingsFromLocal(): ShortcutSettings {
   try {
     const raw = window.localStorage.getItem(SHORTCUT_SETTINGS_STORAGE_KEY);
@@ -336,6 +448,24 @@ function renderShortcutSummary(): void {
   );
 }
 
+function renderShortcutRuntimeState(status: PopupStatusResponse | null, tabSupported: boolean): void {
+  if (!tabSupported) {
+    setText("shortcut-runtime-sync-status", "N/A");
+    setText("shortcut-runtime-mode-status", "N/A");
+    return;
+  }
+
+  if (!status) {
+    setText("shortcut-runtime-sync-status", "Unknown");
+    setText("shortcut-runtime-mode-status", "Unknown");
+    return;
+  }
+
+  const synced = areShortcutSettingsEqual(status.shortcutSettings, shortcutSettings);
+  setText("shortcut-runtime-sync-status", synced ? "Synced" : "Needs sync");
+  setText("shortcut-runtime-mode-status", status.shortcutModeActive ? "Active" : "Off");
+}
+
 async function sendMessageToActiveTab(message: ContentMessage): Promise<PopupStatusResponse | null> {
   const tab = await getActiveTab();
   if (!tab?.id) return null;
@@ -348,19 +478,20 @@ async function sendMessageToActiveTab(message: ContentMessage): Promise<PopupSta
   }
 }
 
-async function syncShortcutSettingsToActiveTab(): Promise<void> {
+async function syncShortcutSettingsToActiveTab(): Promise<PopupStatusResponse | null> {
   const tab = await getActiveTab();
   const supported = isSupportedUrl(tab?.url);
 
-  if (!supported) return;
+  if (!supported) return null;
 
   try {
-    await sendMessageToActiveTab({
+    return await sendMessageToActiveTab({
       type: "SYNC_SHORTCUT_SETTINGS",
       settings: shortcutSettings
     });
   } catch (error) {
     console.warn("Failed to sync shortcut settings to active tab.", error);
+    return null;
   }
 }
 
@@ -369,6 +500,7 @@ function persistShortcutSettings(): void {
   saveShortcutSettingsToLocal(shortcutSettings);
   populateShortcutForm(shortcutSettings);
   renderShortcutSummary();
+  renderShortcutConflictUi();
   void syncShortcutSettingsToActiveTab();
 }
 
@@ -377,6 +509,7 @@ function resetShortcutSettingsToDefault(): void {
   saveShortcutSettingsToLocal(shortcutSettings);
   populateShortcutForm(shortcutSettings);
   renderShortcutSummary();
+  renderShortcutConflictUi();
   void syncShortcutSettingsToActiveTab();
 }
 
@@ -457,15 +590,18 @@ function renderSupportedState(status: PopupStatusResponse): void {
 function renderStatus(status: PopupStatusResponse | null, tabSupported: boolean): void {
   if (!tabSupported) {
     renderUnsupportedState();
+    renderShortcutRuntimeState(null, false);
     return;
   }
 
   if (!status) {
     renderUnavailableState();
+    renderShortcutRuntimeState(null, true);
     return;
   }
 
   renderSupportedState(status);
+  renderShortcutRuntimeState(status, true);
 }
 
 async function refreshStatus(): Promise<void> {
@@ -477,7 +613,12 @@ async function refreshStatus(): Promise<void> {
     return;
   }
 
-  const status = await sendMessageToActiveTab({ type: "GET_STATUS" });
+  let status = await sendMessageToActiveTab({ type: "GET_STATUS" });
+
+  if (status && !areShortcutSettingsEqual(status.shortcutSettings, shortcutSettings)) {
+    status = await syncShortcutSettingsToActiveTab();
+  }
+
   renderStatus(status, true);
 }
 
@@ -571,12 +712,12 @@ function bindEvents(): void {
 
     if (currentButtonText === "Show Panel") {
       await runAction({ type: "SHOW_PANEL" });
-      await syncShortcutSettingsToActiveTab();
+      await refreshStatus();
       return;
     }
 
     await runAction({ type: "OPEN_LOOPLOCK" });
-    await syncShortcutSettingsToActiveTab();
+    await refreshStatus();
   });
 
   document.getElementById("theme-dark-btn")?.addEventListener("click", async () => {
@@ -593,6 +734,7 @@ function bindEvents(): void {
 
   document.getElementById("back-to-main-btn")?.addEventListener("click", () => {
     setView("main");
+    void refreshStatus();
   });
 
   bindShortcutSettingsEvents();
@@ -606,15 +748,16 @@ function initializePopup(): void {
     shortcutSettings = loadShortcutSettingsFromLocal();
     populateShortcutForm(shortcutSettings);
     renderShortcutSummary();
+    renderShortcutConflictUi();
   } catch (error) {
     console.warn("Failed to initialize shortcut settings.", error);
     shortcutSettings = getDefaultShortcutSettings();
     populateShortcutForm(shortcutSettings);
     renderShortcutSummary();
+    renderShortcutConflictUi();
   }
 
   void refreshStatus();
-  void syncShortcutSettingsToActiveTab();
 }
 
 initializePopup();
