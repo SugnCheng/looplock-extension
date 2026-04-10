@@ -450,19 +450,15 @@ function renderShortcutSummary(): void {
 
 function renderShortcutRuntimeState(status: PopupStatusResponse | null, tabSupported: boolean): void {
   if (!tabSupported) {
-    setText("shortcut-runtime-sync-status", "N/A");
     setText("shortcut-runtime-mode-status", "N/A");
     return;
   }
 
   if (!status) {
-    setText("shortcut-runtime-sync-status", "Unknown");
-    setText("shortcut-runtime-mode-status", "Unknown");
+    setText("shortcut-runtime-mode-status", "Unavailable");
     return;
   }
 
-  const synced = areShortcutSettingsEqual(status.shortcutSettings, shortcutSettings);
-  setText("shortcut-runtime-sync-status", synced ? "Synced" : "Needs sync");
   setText("shortcut-runtime-mode-status", status.shortcutModeActive ? "Active" : "Off");
 }
 
@@ -495,22 +491,32 @@ async function syncShortcutSettingsToActiveTab(): Promise<PopupStatusResponse | 
   }
 }
 
-function persistShortcutSettings(): void {
+async function persistShortcutSettings(): Promise<void> {
   shortcutSettings = sanitizeShortcutSettings(shortcutSettings);
   saveShortcutSettingsToLocal(shortcutSettings);
   populateShortcutForm(shortcutSettings);
   renderShortcutSummary();
   renderShortcutConflictUi();
-  void syncShortcutSettingsToActiveTab();
+
+  const tab = await getActiveTab();
+  const supported = isSupportedUrl(tab?.url);
+  const status = await syncShortcutSettingsToActiveTab();
+
+  renderShortcutRuntimeState(status, supported);
 }
 
-function resetShortcutSettingsToDefault(): void {
+async function resetShortcutSettingsToDefault(): Promise<void> {
   shortcutSettings = getDefaultShortcutSettings();
   saveShortcutSettingsToLocal(shortcutSettings);
   populateShortcutForm(shortcutSettings);
   renderShortcutSummary();
   renderShortcutConflictUi();
-  void syncShortcutSettingsToActiveTab();
+
+  const tab = await getActiveTab();
+  const supported = isSupportedUrl(tab?.url);
+  const status = await syncShortcutSettingsToActiveTab();
+
+  renderShortcutRuntimeState(status, supported);
 }
 
 function renderUnsupportedState(): void {
@@ -677,7 +683,7 @@ function bindShortcutCaptureInputs(): void {
       if (event.key === "Backspace" || event.key === "Delete") {
         field.apply("");
         input.value = "";
-        persistShortcutSettings();
+        void persistShortcutSettings();
         return;
       }
 
@@ -686,7 +692,7 @@ function bindShortcutCaptureInputs(): void {
 
       field.apply(shortcut);
       input.value = shortcut;
-      persistShortcutSettings();
+      void persistShortcutSettings();
     });
   }
 }
@@ -695,11 +701,11 @@ function bindShortcutSettingsEvents(): void {
   document.getElementById("shortcut-enabled-toggle")?.addEventListener("change", (event) => {
     const input = event.currentTarget as HTMLInputElement;
     shortcutSettings.enabled = input.checked;
-    persistShortcutSettings();
+    void persistShortcutSettings();
   });
 
   document.getElementById("reset-shortcuts-btn")?.addEventListener("click", () => {
-    resetShortcutSettingsToDefault();
+    void resetShortcutSettingsToDefault();
   });
 
   bindShortcutCaptureInputs();
