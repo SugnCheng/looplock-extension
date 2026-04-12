@@ -6,6 +6,10 @@ import type {
 } from "../shared/types";
 import { loadThemeMode, saveThemeMode } from "../storage/storage";
 
+// =============================================================================
+// Popup state / constants
+// =============================================================================
+
 type PopupView = "main" | "settings";
 
 const SHORTCUT_SETTINGS_STORAGE_KEY = "looplock:popup:shortcutSettings";
@@ -13,6 +17,10 @@ const SHORTCUT_SETTINGS_STORAGE_KEY = "looplock:popup:shortcutSettings";
 let currentView: PopupView = "main";
 let shortcutSettings: ShortcutSettings = getDefaultShortcutSettings();
 let currentThemeMode: ThemeMode = "dark";
+
+// =============================================================================
+// Shortcut settings utilities
+// =============================================================================
 
 function getDefaultShortcutSettings(): ShortcutSettings {
   return {
@@ -137,7 +145,9 @@ function sanitizeShortcutString(value: string): string {
   return ordered.join("+");
 }
 
-function sanitizeShortcutSettings(value: Partial<ShortcutSettings> | null | undefined): ShortcutSettings {
+function sanitizeShortcutSettings(
+  value: Partial<ShortcutSettings> | null | undefined
+): ShortcutSettings {
   const defaults = getDefaultShortcutSettings();
 
   return {
@@ -216,6 +226,10 @@ function areShortcutSettingsEqual(a: ShortcutSettings, b: ShortcutSettings): boo
     left.clearShortcut === right.clearShortcut
   );
 }
+
+// =============================================================================
+// Shortcut settings UI helpers
+// =============================================================================
 
 function getShortcutEntries(settings: ShortcutSettings): Array<{
   key: keyof ShortcutSettings;
@@ -311,6 +325,10 @@ function renderShortcutConflictUi(): void {
   }
 }
 
+// =============================================================================
+// Shortcut settings persistence
+// =============================================================================
+
 function loadShortcutSettingsFromLocal(): ShortcutSettings {
   try {
     const raw = window.localStorage.getItem(SHORTCUT_SETTINGS_STORAGE_KEY);
@@ -330,6 +348,10 @@ function saveShortcutSettingsToLocal(settings: ShortcutSettings): void {
     console.warn("Failed to save popup shortcut settings to localStorage.", error);
   }
 }
+
+// =============================================================================
+// Popup DOM / UI helpers
+// =============================================================================
 
 function getActiveTab(): Promise<chrome.tabs.Tab | null> {
   return new Promise((resolve) => {
@@ -374,6 +396,10 @@ function applyThemeState(themeMode: ThemeMode): void {
   applyPopupTheme(themeMode);
   setThemeButtons(themeMode);
 }
+
+// =============================================================================
+// Popup layout helpers
+// =============================================================================
 
 function setBadgeState(
   label: string,
@@ -432,6 +458,10 @@ function setView(nextView: PopupView): void {
   mainView.classList.toggle("hidden-view", currentView !== "main");
   settingsView.classList.toggle("hidden-view", currentView !== "settings");
 }
+
+// =============================================================================
+// Shortcut summary / settings rendering
+// =============================================================================
 
 function populateShortcutForm(settings: ShortcutSettings): void {
   const enabledToggle = document.getElementById("shortcut-enabled-toggle") as HTMLInputElement | null;
@@ -493,62 +523,9 @@ function renderShortcutRuntimeState(status: PopupStatusResponse | null, tabSuppo
   setText("shortcut-runtime-mode-status", status.shortcutModeActive ? "Active" : "Off");
 }
 
-async function sendMessageToActiveTab(message: ContentMessage): Promise<PopupStatusResponse | null> {
-  const tab = await getActiveTab();
-  if (!tab?.id) return null;
-
-  try {
-    const response = await chrome.tabs.sendMessage(tab.id, message);
-    return response as PopupStatusResponse;
-  } catch {
-    return null;
-  }
-}
-
-async function syncShortcutSettingsToActiveTab(): Promise<PopupStatusResponse | null> {
-  const tab = await getActiveTab();
-  const supported = isSupportedUrl(tab?.url);
-
-  if (!supported) return null;
-
-  try {
-    return await sendMessageToActiveTab({
-      type: "SYNC_SHORTCUT_SETTINGS",
-      settings: shortcutSettings
-    });
-  } catch (error) {
-    console.warn("Failed to sync shortcut settings to active tab.", error);
-    return null;
-  }
-}
-
-async function persistShortcutSettings(): Promise<void> {
-  shortcutSettings = sanitizeShortcutSettings(shortcutSettings);
-  saveShortcutSettingsToLocal(shortcutSettings);
-  populateShortcutForm(shortcutSettings);
-  renderShortcutSummary();
-  renderShortcutConflictUi();
-
-  const tab = await getActiveTab();
-  const supported = isSupportedUrl(tab?.url);
-  const status = await syncShortcutSettingsToActiveTab();
-
-  renderShortcutRuntimeState(status, supported);
-}
-
-async function resetShortcutSettingsToDefault(): Promise<void> {
-  shortcutSettings = getDefaultShortcutSettings();
-  saveShortcutSettingsToLocal(shortcutSettings);
-  populateShortcutForm(shortcutSettings);
-  renderShortcutSummary();
-  renderShortcutConflictUi();
-
-  const tab = await getActiveTab();
-  const supported = isSupportedUrl(tab?.url);
-  const status = await syncShortcutSettingsToActiveTab();
-
-  renderShortcutRuntimeState(status, supported);
-}
+// =============================================================================
+// Popup status rendering
+// =============================================================================
 
 function renderUnsupportedState(): void {
   setText("site-status", "Unsupported page");
@@ -639,6 +616,67 @@ function renderStatus(status: PopupStatusResponse | null, tabSupported: boolean)
   renderShortcutRuntimeState(status, true);
 }
 
+// =============================================================================
+// Popup runtime messaging / actions
+// =============================================================================
+
+async function sendMessageToActiveTab(message: ContentMessage): Promise<PopupStatusResponse | null> {
+  const tab = await getActiveTab();
+  if (!tab?.id) return null;
+
+  try {
+    const response = await chrome.tabs.sendMessage(tab.id, message);
+    return response as PopupStatusResponse;
+  } catch {
+    return null;
+  }
+}
+
+async function syncShortcutSettingsToActiveTab(): Promise<PopupStatusResponse | null> {
+  const tab = await getActiveTab();
+  const supported = isSupportedUrl(tab?.url);
+
+  if (!supported) return null;
+
+  try {
+    return await sendMessageToActiveTab({
+      type: "SYNC_SHORTCUT_SETTINGS",
+      settings: shortcutSettings
+    });
+  } catch (error) {
+    console.warn("Failed to sync shortcut settings to active tab.", error);
+    return null;
+  }
+}
+
+async function persistShortcutSettings(): Promise<void> {
+  shortcutSettings = sanitizeShortcutSettings(shortcutSettings);
+  saveShortcutSettingsToLocal(shortcutSettings);
+  populateShortcutForm(shortcutSettings);
+  renderShortcutSummary();
+  renderShortcutConflictUi();
+
+  const tab = await getActiveTab();
+  const supported = isSupportedUrl(tab?.url);
+  const status = await syncShortcutSettingsToActiveTab();
+
+  renderShortcutRuntimeState(status, supported);
+}
+
+async function resetShortcutSettingsToDefault(): Promise<void> {
+  shortcutSettings = getDefaultShortcutSettings();
+  saveShortcutSettingsToLocal(shortcutSettings);
+  populateShortcutForm(shortcutSettings);
+  renderShortcutSummary();
+  renderShortcutConflictUi();
+
+  const tab = await getActiveTab();
+  const supported = isSupportedUrl(tab?.url);
+  const status = await syncShortcutSettingsToActiveTab();
+
+  renderShortcutRuntimeState(status, supported);
+}
+
 async function refreshStatus(): Promise<void> {
   const tab = await getActiveTab();
   const supported = isSupportedUrl(tab?.url);
@@ -679,6 +717,10 @@ async function applyThemeEverywhere(themeMode: ThemeMode): Promise<void> {
 
   renderStatus(status, supported);
 }
+
+// =============================================================================
+// Event bindings
+// =============================================================================
 
 function bindShortcutCaptureInputs(): void {
   const fields = [
@@ -790,6 +832,10 @@ function bindEvents(): void {
 
   bindShortcutSettingsEvents();
 }
+
+// =============================================================================
+// Initialization
+// =============================================================================
 
 async function initializePopup(): Promise<void> {
   setView("main");
