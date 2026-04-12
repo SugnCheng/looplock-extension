@@ -23,7 +23,7 @@ import type {
   ShortcutSettings
 } from "../shared/types";
 import { observeDomChanges } from "./dom-observer";
-import { isYouTubePage } from "./site-adapters/youtube";
+import { isYouTubePage, isYouTubeWatchPage } from "./site-adapters/youtube";
 import { getPageStorageKey } from "./page-key";
 import { REBIND_DEBOUNCE_MS } from "../shared/constants";
 import { installNavigationWatcher } from "./navigation-watcher";
@@ -166,6 +166,7 @@ async function closeLooplockSession(): Promise<void> {
   runtime.floatingPanelVisible = false;
 
   resetLoopRangeState(runtime.panelState);
+  resetMediaState(runtime.panelState);
 
   await persistSessionState();
   renderPanel();
@@ -336,6 +337,13 @@ function applyShortcutSettings(settings: ShortcutSettings): void {
 }
 
 async function bindMedia(retryCount = 0): Promise<void> {
+  if (!isYouTubeWatchPage()) {
+    loopController.attachMedia(null);
+    runtime.lastBoundMedia = null;
+    syncPanel();
+    return;
+  }
+
   const media = detectPrimaryMedia();
 
   if (!media) {
