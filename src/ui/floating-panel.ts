@@ -30,6 +30,7 @@ export class FloatingPanel {
   private nowValueEl!: HTMLSpanElement;
   private aValueEl!: HTMLSpanElement;
   private bValueEl!: HTMLSpanElement;
+  private helperEl!: HTMLDivElement;
   private errorEl!: HTMLDivElement;
   private setStartBtn!: HTMLButtonElement;
   private setEndBtn!: HTMLButtonElement;
@@ -184,6 +185,9 @@ export class FloatingPanel {
     metricsGrid.appendChild(this.aCardEl);
     metricsGrid.appendChild(this.bCardEl);
 
+    this.helperEl = document.createElement("div");
+    this.helperEl.className = "looplock-helper";
+
     this.errorEl = document.createElement("div");
     this.errorEl.className = "looplock-error";
 
@@ -227,6 +231,7 @@ export class FloatingPanel {
     actions.appendChild(this.clearBtn);
 
     this.bodyEl.appendChild(metricsGrid);
+    this.bodyEl.appendChild(this.helperEl);
     this.bodyEl.appendChild(this.errorEl);
     this.bodyEl.appendChild(actions);
 
@@ -372,6 +377,11 @@ export class FloatingPanel {
       errorMessage
     } = this.state;
 
+    const hasStart = startTime !== null;
+    const hasEnd = endTime !== null;
+    const hasAnyRange = hasStart || hasEnd || enabled;
+    const hasValidRange = hasStart && hasEnd && endTime > startTime;
+
     this.panelEl.classList.toggle("collapsed", collapsed);
 
     this.statusEl.className = `looplock-status ${mediaDetected ? "ok" : "off"}`;
@@ -387,6 +397,11 @@ export class FloatingPanel {
     this.toggleLoopBtn.textContent = enabled ? "Loop Off" : "Loop On";
     this.toggleLoopBtn.classList.toggle("looplock-loop-active", enabled);
 
+    this.setStartBtn.disabled = !mediaDetected;
+    this.setEndBtn.disabled = !mediaDetected;
+    this.toggleLoopBtn.disabled = !enabled && !hasValidRange;
+    this.clearBtn.disabled = !hasAnyRange;
+
     if (collapsed) {
       this.bodyEl.style.display = "none";
     } else {
@@ -396,9 +411,26 @@ export class FloatingPanel {
     if (errorMessage) {
       this.errorEl.style.display = "";
       this.errorEl.textContent = errorMessage;
+      this.helperEl.style.display = "none";
+      this.helperEl.textContent = "";
     } else {
       this.errorEl.style.display = "none";
       this.errorEl.textContent = "";
+
+      this.helperEl.style.display = "";
+      if (!mediaDetected) {
+        this.helperEl.textContent = "Waiting for media...";
+      } else if (!hasStart && !hasEnd) {
+        this.helperEl.textContent = "Set A, then set B.";
+      } else if (hasStart && !hasEnd) {
+        this.helperEl.textContent = "A is set. Now choose B.";
+      } else if (!hasStart && hasEnd) {
+        this.helperEl.textContent = "B is set. Choose A to complete the range.";
+      } else if (enabled) {
+        this.helperEl.textContent = "Looping A → B.";
+      } else {
+        this.helperEl.textContent = "Ready to loop.";
+      }
     }
   }
 }

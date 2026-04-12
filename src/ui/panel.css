@@ -21,12 +21,16 @@
   --ll-now-border: rgba(105, 121, 255, 0.2);
   --ll-btn-bg: rgba(255, 255, 255, 0.08);
   --ll-btn-hover-bg: rgba(255, 255, 255, 0.14);
+  --ll-btn-disabled-bg: rgba(255, 255, 255, 0.04);
+  --ll-btn-disabled-text: rgba(255, 255, 255, 0.42);
   --ll-status-ok-bg: rgba(46, 204, 113, 0.18);
   --ll-status-ok-text: #8cffbe;
   --ll-status-off-bg: rgba(231, 76, 60, 0.18);
   --ll-status-off-text: #ffaea4;
   --ll-error-bg: rgba(231, 76, 60, 0.18);
   --ll-error-text: #ffb9af;
+  --ll-helper-bg: rgba(255, 255, 255, 0.04);
+  --ll-helper-text: #c3cad8;
 }
 
 #looplock-root[data-theme="light"] {
@@ -45,12 +49,16 @@
   --ll-now-border: rgba(105, 121, 255, 0.18);
   --ll-btn-bg: rgba(25, 34, 48, 0.06);
   --ll-btn-hover-bg: rgba(25, 34, 48, 0.1);
+  --ll-btn-disabled-bg: rgba(25, 34, 48, 0.035);
+  --ll-btn-disabled-text: rgba(29, 36, 48, 0.38);
   --ll-status-ok-bg: rgba(46, 204, 113, 0.15);
   --ll-status-ok-text: #13884b;
   --ll-status-off-bg: rgba(231, 76, 60, 0.14);
   --ll-status-off-text: #b9382c;
   --ll-error-bg: rgba(231, 76, 60, 0.12);
   --ll-error-text: #b9382c;
+  --ll-helper-bg: rgba(25, 34, 48, 0.04);
+  --ll-helper-text: #5f6c80;
 }
 
 .looplock-panel {
@@ -213,6 +221,16 @@
   line-height: 1.15;
 }
 
+.looplock-helper {
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--ll-helper-bg);
+  color: var(--ll-helper-text);
+  font-size: 11px;
+  line-height: 1.4;
+  animation: looplockFadeIn 0.18s ease;
+}
+
 .looplock-error {
   padding: 8px 10px;
   border-radius: 10px;
@@ -242,7 +260,8 @@
   transition:
     background 0.15s ease,
     transform 0.12s ease,
-    box-shadow 0.15s ease;
+    box-shadow 0.15s ease,
+    opacity 0.15s ease;
 }
 
 .looplock-action-btn:hover {
@@ -251,6 +270,19 @@
 
 .looplock-action-btn:active {
   transform: scale(0.98);
+}
+
+.looplock-action-btn:disabled {
+  cursor: not-allowed;
+  background: var(--ll-btn-disabled-bg);
+  color: var(--ll-btn-disabled-text);
+  box-shadow: none;
+  transform: none;
+}
+
+.looplock-action-btn:disabled:hover {
+  background: var(--ll-btn-disabled-bg);
+  filter: none;
 }
 
 .looplock-primary-action {
@@ -263,6 +295,13 @@
   filter: brightness(1.05);
 }
 
+.looplock-primary-action:disabled {
+  background: var(--ll-btn-disabled-bg);
+  color: var(--ll-btn-disabled-text);
+  box-shadow: none;
+  filter: none;
+}
+
 .looplock-loop-active {
   background: linear-gradient(135deg, rgba(70, 205, 128, 0.92), rgba(44, 170, 102, 0.92));
   color: white;
@@ -271,6 +310,13 @@
 
 .looplock-loop-active:hover {
   filter: brightness(1.04);
+}
+
+.looplock-loop-active:disabled {
+  background: var(--ll-btn-disabled-bg);
+  color: var(--ll-btn-disabled-text);
+  box-shadow: none;
+  filter: none;
 }
 
 @keyframes looplockFadeIn {
