@@ -4,11 +4,6 @@ import type {
   ThemeMode,
   ShortcutSettings
 } from "../shared/types";
-import { loadThemeMode, saveThemeMode } from "../storage/storage";
-
-// =============================================================================
-// Popup state / constants
-// =============================================================================
 
 type PopupView = "main" | "settings";
 
@@ -16,11 +11,6 @@ const SHORTCUT_SETTINGS_STORAGE_KEY = "looplock:popup:shortcutSettings";
 
 let currentView: PopupView = "main";
 let shortcutSettings: ShortcutSettings = getDefaultShortcutSettings();
-let currentThemeMode: ThemeMode = "dark";
-
-// =============================================================================
-// Shortcut settings utilities
-// =============================================================================
 
 function getDefaultShortcutSettings(): ShortcutSettings {
   return {
@@ -225,10 +215,6 @@ function areShortcutSettingsEqual(a: ShortcutSettings, b: ShortcutSettings): boo
   );
 }
 
-// =============================================================================
-// Shortcut settings UI helpers
-// =============================================================================
-
 function getShortcutEntries(settings: ShortcutSettings): Array<{
   key: keyof ShortcutSettings;
   label: string;
@@ -323,10 +309,6 @@ function renderShortcutConflictUi(): void {
   }
 }
 
-// =============================================================================
-// Shortcut settings persistence
-// =============================================================================
-
 function loadShortcutSettingsFromLocal(): ShortcutSettings {
   try {
     const raw = window.localStorage.getItem(SHORTCUT_SETTINGS_STORAGE_KEY);
@@ -346,10 +328,6 @@ function saveShortcutSettingsToLocal(settings: ShortcutSettings): void {
     console.warn("Failed to save popup shortcut settings to localStorage.", error);
   }
 }
-
-// =============================================================================
-// Popup DOM / UI helpers
-// =============================================================================
 
 function getActiveTab(): Promise<chrome.tabs.Tab | null> {
   return new Promise((resolve) => {
@@ -388,16 +366,6 @@ function setThemeButtons(themeMode: ThemeMode): void {
   darkBtn?.classList.toggle("active", themeMode === "dark");
   lightBtn?.classList.toggle("active", themeMode === "light");
 }
-
-function applyThemeState(themeMode: ThemeMode): void {
-  currentThemeMode = themeMode;
-  applyPopupTheme(themeMode);
-  setThemeButtons(themeMode);
-}
-
-// =============================================================================
-// Popup layout helpers
-// =============================================================================
 
 function setBadgeState(
   label: string,
@@ -456,10 +424,6 @@ function setView(nextView: PopupView): void {
   mainView.classList.toggle("hidden-view", currentView !== "main");
   settingsView.classList.toggle("hidden-view", currentView !== "settings");
 }
-
-// =============================================================================
-// Shortcut summary / settings rendering
-// =============================================================================
 
 function populateShortcutForm(settings: ShortcutSettings): void {
   const enabledToggle = document.getElementById("shortcut-enabled-toggle") as HTMLInputElement | null;
@@ -521,103 +485,6 @@ function renderShortcutRuntimeState(status: PopupStatusResponse | null, tabSuppo
   setText("shortcut-runtime-mode-status", status.shortcutModeActive ? "Active" : "Off");
 }
 
-// =============================================================================
-// Popup status rendering
-// =============================================================================
-
-function renderUnsupportedState(): void {
-  setText("site-status", "Unsupported page");
-  setText("enabled-status", "N/A");
-  setText("panel-status", "N/A");
-  setText("media-status", "N/A");
-  setHeroCopy(
-    "Open a YouTube watch page first.",
-    "LoopLock currently focuses on YouTube watch pages for its MVP experience."
-  );
-  setTipText("Go to a YouTube video page, then reopen the popup to launch LoopLock.");
-  setBadgeState("Unsupported", "error");
-  applyThemeState(currentThemeMode);
-  setOpenButtonState(null, false);
-}
-
-function renderUnavailableState(): void {
-  setText("site-status", "YouTube detected");
-  setText("enabled-status", "Unavailable");
-  setText("panel-status", "Unavailable");
-  setText("media-status", "Unavailable");
-  setHeroCopy(
-    "LoopLock is available on this page.",
-    "The content script did not respond, so status details are temporarily unavailable."
-  );
-  setTipText("Try reopening the popup or refreshing the page if the status stays unavailable.");
-  setBadgeState("Ready", "inactive");
-  applyThemeState(currentThemeMode);
-  setOpenButtonState(null, true);
-}
-
-function renderSupportedState(status: PopupStatusResponse): void {
-  applyThemeState(status.themeMode);
-
-  setText("site-status", status.supported ? "YouTube detected" : "Unsupported page");
-  setText("enabled-status", status.looplockEnabled ? "Enabled" : "Disabled");
-  setText("panel-status", status.panelVisible ? "Visible" : "Hidden");
-  setText("media-status", status.mediaDetected ? "Detected" : "Not detected");
-
-  setOpenButtonState(status, true);
-
-  if (status.looplockEnabled && status.panelVisible) {
-    setBadgeState("Active", "active");
-    setHeroCopy(
-      "LoopLock is active on this tab.",
-      status.mediaDetected
-        ? "Use the floating panel to set A/B points, loop playback, or exit with ✕."
-        : "LoopLock is open, but media has not been detected yet on this page."
-    );
-    setTipText("Tip: drag the panel to your preferred spot — its position now stays saved.");
-    return;
-  }
-
-  if (status.looplockEnabled && !status.panelVisible) {
-    setBadgeState("Enabled", "inactive");
-    setHeroCopy(
-      "LoopLock is enabled, but the panel is hidden.",
-      "Use the button below to show the floating panel again on this video page."
-    );
-    setTipText("Your loop session remains available until you exit from the floating panel.");
-    return;
-  }
-
-  setBadgeState("Ready", "inactive");
-  setHeroCopy(
-    "This page is ready for LoopLock.",
-    status.mediaDetected
-      ? "Open LoopLock to start setting A/B points for the current video."
-      : "Open LoopLock now, and media detection will continue as the page finishes loading."
-  );
-  setTipText("LoopLock starts only when you choose to open it from the popup.");
-}
-
-function renderStatus(status: PopupStatusResponse | null, tabSupported: boolean): void {
-  if (!tabSupported) {
-    renderUnsupportedState();
-    renderShortcutRuntimeState(null, false);
-    return;
-  }
-
-  if (!status) {
-    renderUnavailableState();
-    renderShortcutRuntimeState(null, true);
-    return;
-  }
-
-  renderSupportedState(status);
-  renderShortcutRuntimeState(status, true);
-}
-
-// =============================================================================
-// Popup runtime messaging / actions
-// =============================================================================
-
 async function sendMessageToActiveTab(message: ContentMessage): Promise<PopupStatusResponse | null> {
   const tab = await getActiveTab();
   if (!tab?.id) return null;
@@ -675,6 +542,97 @@ async function resetShortcutSettingsToDefault(): Promise<void> {
   renderShortcutRuntimeState(status, supported);
 }
 
+function renderUnsupportedState(): void {
+  setText("site-status", "Unsupported page");
+  setText("enabled-status", "N/A");
+  setText("panel-status", "N/A");
+  setText("media-status", "N/A");
+  setHeroCopy(
+    "Open a YouTube watch page first.",
+    "LoopLock currently focuses on YouTube watch pages for its MVP experience."
+  );
+  setTipText("Go to a YouTube video page, then reopen the popup to launch LoopLock.");
+  setBadgeState("Unsupported", "error");
+  applyPopupTheme("dark");
+  setThemeButtons("dark");
+  setOpenButtonState(null, false);
+}
+
+function renderUnavailableState(): void {
+  setText("site-status", "YouTube detected");
+  setText("enabled-status", "Unavailable");
+  setText("panel-status", "Unavailable");
+  setText("media-status", "Unavailable");
+  setHeroCopy(
+    "LoopLock is available on this page.",
+    "The content script did not respond, so status details are temporarily unavailable."
+  );
+  setTipText("Try reopening the popup or refreshing the page if the status stays unavailable.");
+  setBadgeState("Ready", "inactive");
+  applyPopupTheme("dark");
+  setThemeButtons("dark");
+  setOpenButtonState(null, true);
+}
+
+function renderSupportedState(status: PopupStatusResponse): void {
+  setText("site-status", status.supported ? "YouTube detected" : "Unsupported page");
+  setText("enabled-status", status.looplockEnabled ? "Enabled" : "Disabled");
+  setText("panel-status", status.panelVisible ? "Visible" : "Hidden");
+  setText("media-status", status.mediaDetected ? "Detected" : "Not detected");
+
+  applyPopupTheme(status.themeMode);
+  setThemeButtons(status.themeMode);
+  setOpenButtonState(status, true);
+
+  if (status.looplockEnabled && status.panelVisible) {
+    setBadgeState("Active", "active");
+    setHeroCopy(
+      "LoopLock is active on this tab.",
+      status.mediaDetected
+        ? "Use the floating panel to set A/B points, loop playback, or exit with ✕."
+        : "LoopLock is open, but media has not been detected yet on this page."
+    );
+    setTipText("Tip: drag the panel to your preferred spot — its position now stays saved.");
+    return;
+  }
+
+  if (status.looplockEnabled && !status.panelVisible) {
+    setBadgeState("Enabled", "inactive");
+    setHeroCopy(
+      "LoopLock is enabled, but the panel is hidden.",
+      "Use the button below to show the floating panel again on this video page."
+    );
+    setTipText("Your loop session remains available until you exit from the floating panel.");
+    return;
+  }
+
+  setBadgeState("Ready", "inactive");
+  setHeroCopy(
+    "This page is ready for LoopLock.",
+    status.mediaDetected
+      ? "Open LoopLock to start setting A/B points for the current video."
+      : "Open LoopLock now, and media detection will continue as the page finishes loading."
+  );
+  setTipText("LoopLock starts only when you choose to open it from the popup.");
+}
+
+function renderStatus(status: PopupStatusResponse | null, tabSupported: boolean): void {
+  if (!tabSupported) {
+    renderUnsupportedState();
+    renderShortcutRuntimeState(null, false);
+    return;
+  }
+
+  if (!status) {
+    renderUnavailableState();
+    renderShortcutRuntimeState(null, true);
+    return;
+  }
+
+  renderSupportedState(status);
+  renderShortcutRuntimeState(status, true);
+}
+
 async function refreshStatus(): Promise<void> {
   const tab = await getActiveTab();
   const supported = isSupportedUrl(tab?.url);
@@ -699,31 +657,6 @@ async function runAction(message: ContentMessage): Promise<void> {
   const supported = isSupportedUrl(tab?.url);
   renderStatus(status, supported);
 }
-
-async function applyThemeEverywhere(themeMode: ThemeMode): Promise<void> {
-  applyThemeState(themeMode);
-
-  try {
-    await saveThemeMode(themeMode);
-  } catch (error) {
-    console.warn("Failed to save popup theme.", error);
-  }
-
-  const tab = await getActiveTab();
-  const supported = isSupportedUrl(tab?.url);
-
-  if (!supported) {
-    renderStatus(null, false);
-    return;
-  }
-
-  const status = await sendMessageToActiveTab({ type: "SET_THEME", themeMode });
-  renderStatus(status, true);
-}
-
-// =============================================================================
-// Event bindings
-// =============================================================================
 
 function bindShortcutCaptureInputs(): void {
   const fields = [
@@ -817,11 +750,11 @@ function bindEvents(): void {
   });
 
   document.getElementById("theme-dark-btn")?.addEventListener("click", async () => {
-    await applyThemeEverywhere("dark");
+    await runAction({ type: "SET_THEME", themeMode: "dark" });
   });
 
   document.getElementById("theme-light-btn")?.addEventListener("click", async () => {
-    await applyThemeEverywhere("light");
+    await runAction({ type: "SET_THEME", themeMode: "light" });
   });
 
   document.getElementById("open-settings-btn")?.addEventListener("click", () => {
@@ -836,22 +769,9 @@ function bindEvents(): void {
   bindShortcutSettingsEvents();
 }
 
-// =============================================================================
-// Initialization
-// =============================================================================
-
-async function initializePopup(): Promise<void> {
+function initializePopup(): void {
   setView("main");
   bindEvents();
-
-  try {
-    currentThemeMode = await loadThemeMode();
-    applyThemeState(currentThemeMode);
-  } catch (error) {
-    console.warn("Failed to initialize popup theme.", error);
-    currentThemeMode = "dark";
-    applyThemeState(currentThemeMode);
-  }
 
   try {
     shortcutSettings = loadShortcutSettingsFromLocal();
@@ -866,7 +786,7 @@ async function initializePopup(): Promise<void> {
     renderShortcutConflictUi();
   }
 
-  await refreshStatus();
+  void refreshStatus();
 }
 
-void initializePopup();
+initializePopup();
