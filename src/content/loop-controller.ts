@@ -111,6 +111,48 @@ export class LoopController {
     this.emitChange();
   }
 
+  setStartExact(valueSeconds: number): void {
+    if (!this.media) {
+      this.errorMessage = "No video detected yet.";
+      this.emitChange();
+      return;
+    }
+
+    const nextStart = this.clampToMediaBounds(valueSeconds);
+    const currentEnd = this.range.endTime;
+
+    if (currentEnd !== null && nextStart >= currentEnd) {
+      this.errorMessage = "A must be earlier than B.";
+      this.emitChange();
+      return;
+    }
+
+    this.range.startTime = nextStart;
+    this.errorMessage = null;
+    this.emitChange();
+  }
+
+  setEndExact(valueSeconds: number): void {
+    if (!this.media) {
+      this.errorMessage = "No video detected yet.";
+      this.emitChange();
+      return;
+    }
+
+    const nextEnd = this.clampToMediaBounds(valueSeconds);
+    const currentStart = this.range.startTime;
+
+    if (currentStart !== null && nextEnd <= currentStart) {
+      this.errorMessage = "B must be later than A.";
+      this.emitChange();
+      return;
+    }
+
+    this.range.endTime = nextEnd;
+    this.errorMessage = null;
+    this.emitChange();
+  }
+
   adjustStart(deltaSeconds: number): void {
     if (!this.media) {
       this.errorMessage = "No video detected yet.";

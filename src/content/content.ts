@@ -79,6 +79,10 @@ function nudgeCurrentTime(deltaSeconds: number): void {
   syncPanel();
 }
 
+function canEditManualLoopTimestamps(): boolean {
+  return runtime.looplockEnabled && runtime.panelState.mediaDetected && !runtime.panelState.enabled;
+}
+
 const panel = new FloatingPanel(runtime.panelState, {
   getInitialPosition: () => runtime.panelPosition,
   onPositionChange: async (position) => {
@@ -128,6 +132,30 @@ const panel = new FloatingPanel(runtime.panelState, {
     loopController.adjustEnd(PANEL_TIME_NUDGE_SECONDS);
     syncPanel();
   },
+  onCommitStartInput: (valueSeconds) => {
+    if (!canEditManualLoopTimestamps()) {
+      runtime.panelState.errorMessage = "Turn loop off to edit A/B manually.";
+      syncPanel();
+      return false;
+    }
+
+    loopController.setStartExact(valueSeconds);
+    syncPanel();
+    return loopController.getErrorMessage() === null;
+  },
+  onCommitEndInput: (valueSeconds) => {
+    if (!canEditManualLoopTimestamps()) {
+      runtime.panelState.errorMessage = "Turn loop off to edit A/B manually.";
+      syncPanel();
+      return false;
+    }
+
+    loopController.setEndExact(valueSeconds);
+    syncPanel();
+    return loopController.getErrorMessage() === null;
+  },
+  canEditStartInput: () => canEditManualLoopTimestamps(),
+  canEditEndInput: () => canEditManualLoopTimestamps(),
   onToggleLoop: () => {
     if (!runtime.looplockEnabled) return;
     loopController.toggleEnabled();

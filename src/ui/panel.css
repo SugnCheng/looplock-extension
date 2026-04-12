@@ -262,6 +262,20 @@
   border-color: var(--ll-now-border);
 }
 
+.looplock-manual-editable {
+  cursor: text;
+}
+
+.looplock-manual-editable .looplock-metric-value span {
+  text-decoration: underline;
+  text-decoration-color: rgba(255, 255, 255, 0.14);
+  text-underline-offset: 3px;
+}
+
+#looplock-root[data-theme="light"] .looplock-manual-editable .looplock-metric-value span {
+  text-decoration-color: rgba(30, 41, 59, 0.16);
+}
+
 .looplock-metric-label {
   font-size: 9px;
   color: var(--ll-text-soft);
@@ -273,7 +287,7 @@
 
 .looplock-metric-content-row {
   display: grid;
-  grid-template-columns: 58px 1fr 58px;
+  grid-template-columns: 50px 1fr 50px;
   align-items: center;
   gap: 6px;
 }
@@ -292,26 +306,163 @@
 }
 
 .looplock-metric-value {
+  position: relative;
   font-size: 13px;
   font-weight: 600;
   color: var(--ll-text-main);
   line-height: 1.15;
   text-align: center;
+  width: 78px;
+  min-width: 78px;
+  max-width: 78px;
+  height: 18px;
+  min-height: 18px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .looplock-metric-value span {
   display: inline-block;
+  width: 78px;
   min-width: 78px;
+  max-width: 78px;
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.08px;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.looplock-time-editor {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  align-items: center;
+  justify-content: center;
+  width: 78px;
+  min-width: 78px;
+  max-width: 78px;
+  height: 18px;
+  opacity: 0;
+  pointer-events: none;
+  grid-auto-rows: 18px;
+}
+
+.looplock-time-editor.no-hours {
+  grid-template-columns: 0px 0px 16px 6px 16px 6px 8px;
+}
+
+.looplock-time-editor.has-hours {
+  grid-template-columns: 14px 6px 16px 6px 16px 6px 8px;
+}
+
+.looplock-time-editor.is-active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.looplock-time-segment-input,
+.looplock-time-separator {
+  align-self: center;
+  justify-self: center;
+}
+
+.looplock-time-segment-input.hours,
+.looplock-time-separator.hours-sep {
+  grid-column: 1;
+}
+
+.looplock-time-separator.hours-sep {
+  grid-column: 2;
+}
+
+.looplock-time-segment-input.minutes {
+  grid-column: 3;
+}
+
+.looplock-time-separator.middle-sep {
+  grid-column: 4;
+}
+
+.looplock-time-segment-input.seconds {
+  grid-column: 5;
+}
+
+.looplock-time-separator.decimal-sep {
+  grid-column: 6;
+}
+
+.looplock-time-segment-input.tenths {
+  grid-column: 7;
+}
+
+.looplock-time-segment-input {
+  border: none;
+  background: transparent;
+  color: var(--ll-text-main);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+  outline: none;
+  padding: 0;
+  margin: 0;
+  line-height: 1.15;
+  caret-color: var(--ll-text-main);
+  height: 18px;
+  min-width: 0;
+  box-sizing: border-box;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.looplock-time-editor.no-hours .hours,
+.looplock-time-editor.no-hours .hours-sep {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.looplock-time-segment-input.hours {
+  width: 14px;
+}
+
+.looplock-time-segment-input.minutes,
+.looplock-time-segment-input.seconds {
+  width: 16px;
+}
+
+.looplock-time-segment-input.tenths {
+  width: 8px;
+}
+
+.looplock-time-segment-input:focus {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+}
+
+#looplock-root[data-theme="light"] .looplock-time-segment-input:focus {
+  background: rgba(30, 41, 59, 0.08);
+}
+
+.looplock-time-separator {
+  color: var(--ll-text-sub);
+  font-size: 13px;
+  font-weight: 600;
+  width: 6px;
+  min-width: 6px;
+  max-width: 6px;
+  user-select: none;
 }
 
 .looplock-mini-adjust-btn {
+  width: 50px;
   min-width: 50px;
+  max-width: 50px;
   height: 25px;
   border: 1px solid transparent;
   border-radius: 7px;
-  padding: 0 6px;
+  padding: 0;
   cursor: pointer;
   background: var(--ll-btn-bg);
   color: var(--ll-text-main);
@@ -323,6 +474,7 @@
     transform 0.12s ease,
     opacity 0.15s ease,
     border-color 0.15s ease;
+  box-sizing: border-box;
 }
 
 .looplock-mini-adjust-btn:hover {
