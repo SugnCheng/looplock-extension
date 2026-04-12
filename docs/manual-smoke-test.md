@@ -1,6 +1,6 @@
 # LoopLock Manual Smoke Test
 
-This checklist is used to verify that LoopLock’s core flow remains stable after any UI, popup, content-script, runtime, or shortcut-related change.
+This checklist is used to verify that LoopLock’s core flow remains stable after any UI, popup, content-script, runtime, build, or shortcut-related change.
 
 ---
 
@@ -8,12 +8,14 @@ This checklist is used to verify that LoopLock’s core flow remains stable afte
 
 Current intended product scope:
 
-- YouTube watch pages only
+- YouTube watch pages only for opening a new LoopLock session
 - Popup as the official entry point
 - Floating panel opened manually from popup
 - A-B loop playback on the active video
 - Dark / light theme sync between popup and floating panel
 - Keyboard shortcuts as optional, popup-local settings with runtime sync
+- Theme sync may still apply on other YouTube pages if the active tab content runtime is still reachable
+- Content script must be built as an injectable bundle from the built extension output
 
 ---
 
@@ -21,8 +23,8 @@ Current intended product scope:
 
 Before starting:
 
-1. Open the latest built extension in Chrome or Edge
-2. Confirm the extension is loaded successfully
+1. Build the latest extension output
+2. Confirm the extension is loaded successfully from the correct built output
 3. Open a normal YouTube watch page
 4. Make sure no old assumptions are being reused from previous runs
 5. Treat this as a fresh manual validation pass
@@ -31,7 +33,29 @@ Recommended pages to test:
 
 - A normal YouTube watch page with a playable video
 - A second different YouTube watch page for navigation reset testing
-- A non-watch page such as YouTube home or another website for unsupported-state testing
+- A YouTube non-watch page such as Home or a creator channel page
+- A completely unsupported page for unsupported-state testing
+
+---
+
+## 0. Build / Install Validation
+
+### Goal
+Verify the extension build and install base is valid before testing product behavior.
+
+### Steps
+1. Run the current build command
+2. Open `chrome://extensions` or `edge://extensions`
+3. Remove any stale local version if needed
+4. Load the extension from the latest built output
+5. Open a YouTube watch page
+6. Refresh the page after loading the extension
+
+### Expected Result
+- The extension loads without install errors
+- The built output is the one actually being tested
+- The popup can connect to the active page on supported watch pages
+- No immediate content-script syntax failure occurs
 
 ---
 
@@ -197,10 +221,10 @@ Verify normal DOM changes do not incorrectly break the session on the same video
 
 ---
 
-## 9. Theme Sync
+## 9. Theme Sync on Watch Page
 
 ### Goal
-Verify popup and floating panel stay synchronized in theme mode.
+Verify popup and floating panel stay synchronized in theme mode on a supported watch page.
 
 ### Steps
 1. Open popup on a supported watch page
@@ -217,7 +241,26 @@ Verify popup and floating panel stay synchronized in theme mode.
 
 ---
 
-## 10. Panel Visibility Recovery
+## 10. Theme Sync on Non-Watch YouTube Pages
+
+### Goal
+Verify popup theme can still sync to an existing panel on YouTube pages that are not watch pages, as long as the active tab content runtime is still reachable.
+
+### Steps
+1. Open LoopLock from a watch page
+2. Leave the session/panel alive
+3. Navigate to YouTube Home or a creator page
+4. Open popup
+5. Switch theme between `Dark` and `Light`
+
+### Expected Result
+- Popup theme still changes immediately
+- Floating panel theme still syncs if the tab runtime remains reachable
+- The inability to open a new session on a non-watch page does not block theme sync for an already-alive panel
+
+---
+
+## 11. Panel Visibility Recovery
 
 ### Goal
 Verify a session with hidden panel can recover correctly.
@@ -234,7 +277,7 @@ Verify a session with hidden panel can recover correctly.
 
 ---
 
-## 11. Draggable Panel Persistence
+## 12. Draggable Panel Persistence
 
 ### Goal
 Verify floating panel position saving remains stable.
@@ -252,7 +295,7 @@ Verify floating panel position saving remains stable.
 
 ---
 
-## 12. Collapsed State Behavior
+## 13. Collapsed State Behavior
 
 ### Goal
 Verify the panel can collapse and recover correctly.
@@ -272,7 +315,7 @@ Verify the panel can collapse and recover correctly.
 
 ---
 
-## 13. Shortcut Default State
+## 14. Shortcut Default State
 
 ### Goal
 Verify keyboard shortcuts remain Off by default.
@@ -289,7 +332,7 @@ Verify keyboard shortcuts remain Off by default.
 
 ---
 
-## 14. Shortcut Enable / Disable
+## 15. Shortcut Enable / Disable
 
 ### Goal
 Verify shortcut enablement works and stays isolated from the main session flow.
@@ -304,13 +347,13 @@ Verify shortcut enablement works and stays isolated from the main session flow.
 ### Expected Result
 - Enabled / disabled state updates correctly
 - Shortcut summary updates correctly
-- Runtime sync state updates reasonably
+- Shortcut runtime state updates reasonably
 - Main popup flow remains stable
 - Open LoopLock / theme / panel behavior is not broken by shortcut settings
 
 ---
 
-## 15. Shortcut Capture
+## 16. Shortcut Capture
 
 ### Goal
 Verify shortcut input fields capture key combinations correctly.
@@ -329,7 +372,7 @@ Verify shortcut input fields capture key combinations correctly.
 
 ---
 
-## 16. Shortcut Reset to Default
+## 17. Shortcut Reset to Default
 
 ### Goal
 Verify clearing a shortcut field restores the default mapping.
@@ -344,11 +387,11 @@ Verify clearing a shortcut field restores the default mapping.
 - The field does not remain blank
 - The field returns to its default value
 - Summary reflects the default value
-- Runtime sync remains stable
+- Shortcut runtime state remains stable
 
 ---
 
-## 17. Shortcut Conflict Warning
+## 18. Shortcut Conflict Warning
 
 ### Goal
 Verify conflict feedback remains clear and local to popup settings.
@@ -366,7 +409,7 @@ Verify conflict feedback remains clear and local to popup settings.
 
 ---
 
-## 18. Runtime Shortcut Sync
+## 19. Shortcut Runtime Sync
 
 ### Goal
 Verify popup shortcut settings can sync to the active supported tab.
@@ -376,17 +419,17 @@ Verify popup shortcut settings can sync to the active supported tab.
 2. Open popup settings
 3. Change one or more shortcut mappings
 4. Return to main popup view
-5. Observe `Runtime Sync` and `Shortcut Mode`
+5. Observe shortcut runtime state
 
 ### Expected Result
-- Runtime sync state reflects the latest tab condition
-- Sync status is understandable and stable
+- Runtime state reflects the latest tab condition
+- Sync behavior is understandable and stable
 - Shortcut changes do not break theme switching or session opening
 - Sync behavior remains isolated from shared storage risks
 
 ---
 
-## 19. Page Shortcut Focus Rule
+## 20. Page Shortcut Focus Rule
 
 ### Goal
 Verify current accepted focus behavior remains true and predictable.
@@ -405,7 +448,7 @@ Verify current accepted focus behavior remains true and predictable.
 
 ---
 
-## 20. Unsupported Page State
+## 21. Unsupported Page State
 
 ### Goal
 Verify popup correctly handles unsupported contexts.
@@ -421,7 +464,7 @@ Verify popup correctly handles unsupported contexts.
 
 ---
 
-## 21. Content Script Unavailable State
+## 22. Content Script Unavailable State
 
 ### Goal
 Verify popup handles temporary status-unavailable conditions safely.
@@ -438,7 +481,25 @@ Verify popup handles temporary status-unavailable conditions safely.
 
 ---
 
-## 22. Regression Guard: Main Chain Stability
+## 23. Content Injection / Runtime Diagnosis
+
+### Goal
+Verify the standard diagnosis path for “Unavailable” or missing panel behavior remains clear.
+
+### Steps
+1. Open a supported watch page
+2. If popup shows unavailable or panel fails to appear, inspect the page console
+3. Verify the extension was loaded from the current built output
+4. Re-check that the content runtime is actually present on the page
+
+### Expected Result
+- Failures can be triaged in a predictable order
+- Build / injection issues can be distinguished from popup logic issues
+- The team does not mistake a dead content runtime for a panel logic regression
+
+---
+
+## 24. Regression Guard: Main Chain Stability
 
 ### Goal
 Verify the most critical product chain has not been broken by recent changes.
@@ -488,18 +549,23 @@ Use this template after each validation pass:
 
 ---
 
-## Release Gate Recommendation
+## Push / Release Gate Recommendation
 
-Before merging any change that touches popup, content, runtime messaging, theme, panel rendering, or shortcut behavior, re-run at least:
+Before pushing any change that touches popup, content, runtime messaging, theme, panel rendering, build output, or shortcut behavior:
 
-- Popup Entry Flow
-- No Auto-Start / No Auto-Open
-- Floating Panel Core Controls
-- Close Session Behavior
-- New Video Reset Behavior
-- Theme Sync
-- Shortcut Conflict Warning
-- Regression Guard: Main Chain Stability
+1. Confirm the latest stable local version actually passed smoke testing
+2. Push only after the stable version is explicitly accepted as the next baseline
+3. Re-run at least these checks:
+   - Build / Install Validation
+   - Popup Entry Flow
+   - No Auto-Start / No Auto-Open
+   - Floating Panel Core Controls
+   - Close Session Behavior
+   - New Video Reset Behavior
+   - Theme Sync on Watch Page
+   - Theme Sync on Non-Watch YouTube Pages
+   - Shortcut Conflict Warning
+   - Regression Guard: Main Chain Stability
 
 ---
 
