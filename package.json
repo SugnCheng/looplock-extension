@@ -4,8 +4,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite build --watch",
-    "build": "vite build"
+    "dev": "npm run build:content -- --watch & npm run build:app -- --watch",
+    "build:content": "vite build --mode content",
+    "build:app": "vite build --mode app",
+    "build": "npm run build:content && npm run build:app"
   },
   "devDependencies": {
     "@types/chrome": "^0.0.292",

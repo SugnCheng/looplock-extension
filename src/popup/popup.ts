@@ -4,6 +4,7 @@ import type {
   ThemeMode,
   ShortcutSettings
 } from "../shared/types";
+import { loadThemeMode, saveThemeMode } from "../storage/storage";
 
 type PopupView = "main" | "settings";
 
@@ -11,6 +12,7 @@ const SHORTCUT_SETTINGS_STORAGE_KEY = "looplock:popup:shortcutSettings";
 
 let currentView: PopupView = "main";
 let shortcutSettings: ShortcutSettings = getDefaultShortcutSettings();
+let currentThemeMode: ThemeMode = "dark";
 
 function getDefaultShortcutSettings(): ShortcutSettings {
   return {
@@ -367,6 +369,12 @@ function setThemeButtons(themeMode: ThemeMode): void {
   lightBtn?.classList.toggle("active", themeMode === "light");
 }
 
+function applyThemeState(themeMode: ThemeMode): void {
+  currentThemeMode = themeMode;
+  applyPopupTheme(themeMode);
+  setThemeButtons(themeMode);
+}
+
 function setBadgeState(
   label: string,
   variant: "active" | "inactive" | "error"
@@ -553,8 +561,7 @@ function renderUnsupportedState(): void {
   );
   setTipText("Go to a YouTube video page, then reopen the popup to launch LoopLock.");
   setBadgeState("Unsupported", "error");
-  applyPopupTheme("dark");
-  setThemeButtons("dark");
+  applyThemeState(currentThemeMode);
   setOpenButtonState(null, false);
 }
 
@@ -569,19 +576,18 @@ function renderUnavailableState(): void {
   );
   setTipText("Try reopening the popup or refreshing the page if the status stays unavailable.");
   setBadgeState("Ready", "inactive");
-  applyPopupTheme("dark");
-  setThemeButtons("dark");
+  applyThemeState(currentThemeMode);
   setOpenButtonState(null, true);
 }
 
 function renderSupportedState(status: PopupStatusResponse): void {
+  applyThemeState(status.themeMode);
+
   setText("site-status", status.supported ? "YouTube detected" : "Unsupported page");
   setText("enabled-status", status.looplockEnabled ? "Enabled" : "Disabled");
   setText("panel-status", status.panelVisible ? "Visible" : "Hidden");
   setText("media-status", status.mediaDetected ? "Detected" : "Not detected");
 
-  applyPopupTheme(status.themeMode);
-  setThemeButtons(status.themeMode);
   setOpenButtonState(status, true);
 
   if (status.looplockEnabled && status.panelVisible) {
@@ -655,6 +661,22 @@ async function runAction(message: ContentMessage): Promise<void> {
   const status = await sendMessageToActiveTab(message);
   const tab = await getActiveTab();
   const supported = isSupportedUrl(tab?.url);
+  renderStatus(status, supported);
+}
+
+async function applyThemeEverywhere(themeMode: ThemeMode): Promise<void> {
+  applyThemeState(themeMode);
+
+  try {
+    await saveThemeMode(themeMode);
+  } catch (error) {
+    console.warn("Failed to save popup theme.", error);
+  }
+
+  const tab = await getActiveTab();
+  const supported = isSupportedUrl(tab?.url);
+  const status = await sendMessageToActiveTab({ type: "SET_THEME", themeMode });
+
   renderStatus(status, supported);
 }
 
@@ -750,11 +772,11 @@ function bindEvents(): void {
   });
 
   document.getElementById("theme-dark-btn")?.addEventListener("click", async () => {
-    await runAction({ type: "SET_THEME", themeMode: "dark" });
+    await applyThemeEverywhere("dark");
   });
 
   document.getElementById("theme-light-btn")?.addEventListener("click", async () => {
-    await runAction({ type: "SET_THEME", themeMode: "light" });
+    await applyThemeEverywhere("light");
   });
 
   document.getElementById("open-settings-btn")?.addEventListener("click", () => {
@@ -769,9 +791,18 @@ function bindEvents(): void {
   bindShortcutSettingsEvents();
 }
 
-function initializePopup(): void {
+async function initializePopup(): Promise<void> {
   setView("main");
   bindEvents();
+
+  try {
+    currentThemeMode = await loadThemeMode();
+    applyThemeState(currentThemeMode);
+  } catch (error) {
+    console.warn("Failed to initialize popup theme.", error);
+    currentThemeMode = "dark";
+    applyThemeState(currentThemeMode);
+  }
 
   try {
     shortcutSettings = loadShortcutSettingsFromLocal();
@@ -786,7 +817,7 @@ function initializePopup(): void {
     renderShortcutConflictUi();
   }
 
-  void refreshStatus();
+  await refreshStatus();
 }
 
-initializePopup();
+void initializePopup();
