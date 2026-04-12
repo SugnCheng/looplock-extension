@@ -43,6 +43,8 @@ type ShortcutAction =
   | "TOGGLE_LOOP"
   | "CLEAR";
 
+const PANEL_TIME_NUDGE_SECONDS = 0.5;
+
 const runtime = createRuntimeState(getPageStorageKey());
 
 const loopController = new LoopController(({ range, errorMessage, currentTime }) => {
@@ -73,6 +75,26 @@ const panel = new FloatingPanel(runtime.panelState, {
   onSetEnd: () => {
     if (!runtime.looplockEnabled) return;
     loopController.setEndFromCurrentTime();
+    syncPanel();
+  },
+  onAdjustStartBackward: () => {
+    if (!runtime.looplockEnabled) return;
+    loopController.adjustStart(-PANEL_TIME_NUDGE_SECONDS);
+    syncPanel();
+  },
+  onAdjustStartForward: () => {
+    if (!runtime.looplockEnabled) return;
+    loopController.adjustStart(PANEL_TIME_NUDGE_SECONDS);
+    syncPanel();
+  },
+  onAdjustEndBackward: () => {
+    if (!runtime.looplockEnabled) return;
+    loopController.adjustEnd(-PANEL_TIME_NUDGE_SECONDS);
+    syncPanel();
+  },
+  onAdjustEndForward: () => {
+    if (!runtime.looplockEnabled) return;
+    loopController.adjustEnd(PANEL_TIME_NUDGE_SECONDS);
     syncPanel();
   },
   onToggleLoop: () => {

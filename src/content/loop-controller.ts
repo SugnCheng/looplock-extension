@@ -111,6 +111,60 @@ export class LoopController {
     this.emitChange();
   }
 
+  adjustStart(deltaSeconds: number): void {
+    if (!this.media) {
+      this.errorMessage = "No video detected yet.";
+      this.emitChange();
+      return;
+    }
+
+    if (this.range.startTime === null) {
+      this.errorMessage = "Set A first.";
+      this.emitChange();
+      return;
+    }
+
+    const nextStart = this.clampToMediaBounds(this.range.startTime + deltaSeconds);
+    const currentEnd = this.range.endTime;
+
+    if (currentEnd !== null && nextStart >= currentEnd) {
+      this.errorMessage = "B must be later than A.";
+      this.emitChange();
+      return;
+    }
+
+    this.range.startTime = nextStart;
+    this.errorMessage = null;
+    this.emitChange();
+  }
+
+  adjustEnd(deltaSeconds: number): void {
+    if (!this.media) {
+      this.errorMessage = "No video detected yet.";
+      this.emitChange();
+      return;
+    }
+
+    if (this.range.endTime === null) {
+      this.errorMessage = "Set B first.";
+      this.emitChange();
+      return;
+    }
+
+    const nextEnd = this.clampToMediaBounds(this.range.endTime + deltaSeconds);
+    const currentStart = this.range.startTime;
+
+    if (currentStart !== null && nextEnd <= currentStart) {
+      this.errorMessage = "B must be later than A.";
+      this.emitChange();
+      return;
+    }
+
+    this.range.endTime = nextEnd;
+    this.errorMessage = null;
+    this.emitChange();
+  }
+
   toggleEnabled(): void {
     const nextEnabled = !this.range.enabled;
 
@@ -145,6 +199,28 @@ export class LoopController {
     this.errorMessage = null;
     this.stopInternalLoop();
     this.emitChange();
+  }
+
+  private clampToMediaBounds(value: number): number {
+    const min = 0;
+    const max = this.getMediaDuration();
+
+    if (max === null) {
+      return Math.max(min, value);
+    }
+
+    return Math.min(Math.max(min, value), max);
+  }
+
+  private getMediaDuration(): number | null {
+    if (!this.media) return null;
+    const duration = this.media.duration;
+
+    if (!Number.isFinite(duration) || duration <= 0) {
+      return null;
+    }
+
+    return duration;
   }
 
   private validateRange(setError: boolean): boolean {

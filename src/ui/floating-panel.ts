@@ -7,6 +7,10 @@ interface PanelHandlers {
   onPositionChange: (position: PanelPosition) => void | Promise<void>;
   onSetStart: () => void;
   onSetEnd: () => void;
+  onAdjustStartBackward: () => void;
+  onAdjustStartForward: () => void;
+  onAdjustEndBackward: () => void;
+  onAdjustEndForward: () => void;
   onToggleLoop: () => void;
   onClear: () => void;
   onToggleCollapse: () => void;
@@ -30,6 +34,10 @@ export class FloatingPanel {
   private nowValueEl!: HTMLSpanElement;
   private aValueEl!: HTMLSpanElement;
   private bValueEl!: HTMLSpanElement;
+  private aAdjustBackwardBtn!: HTMLButtonElement;
+  private aAdjustForwardBtn!: HTMLButtonElement;
+  private bAdjustBackwardBtn!: HTMLButtonElement;
+  private bAdjustForwardBtn!: HTMLButtonElement;
   private helperEl!: HTMLDivElement;
   private errorEl!: HTMLDivElement;
   private setStartBtn!: HTMLButtonElement;
@@ -96,6 +104,17 @@ export class FloatingPanel {
 
   private applyTheme(): void {
     this.root.dataset.theme = this.themeMode;
+  }
+
+  private buildAdjustButton(label: string, onClick: () => void): HTMLButtonElement {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "looplock-mini-adjust-btn";
+    btn.textContent = label;
+    btn.addEventListener("click", () => {
+      onClick();
+    });
+    return btn;
   }
 
   private build(): void {
@@ -174,6 +193,18 @@ export class FloatingPanel {
     `;
     this.aValueEl = this.aCardEl.querySelector("span") as HTMLSpanElement;
 
+    const aAdjustments = document.createElement("div");
+    aAdjustments.className = "looplock-metric-adjustments";
+    this.aAdjustBackwardBtn = this.buildAdjustButton("−0.5", () => {
+      this.handlers.onAdjustStartBackward();
+    });
+    this.aAdjustForwardBtn = this.buildAdjustButton("+0.5", () => {
+      this.handlers.onAdjustStartForward();
+    });
+    aAdjustments.appendChild(this.aAdjustBackwardBtn);
+    aAdjustments.appendChild(this.aAdjustForwardBtn);
+    this.aCardEl.appendChild(aAdjustments);
+
     this.bCardEl = document.createElement("div");
     this.bCardEl.className = "looplock-metric-card";
     this.bCardEl.innerHTML = `
@@ -181,6 +212,18 @@ export class FloatingPanel {
       <div class="looplock-metric-value"><span></span></div>
     `;
     this.bValueEl = this.bCardEl.querySelector("span") as HTMLSpanElement;
+
+    const bAdjustments = document.createElement("div");
+    bAdjustments.className = "looplock-metric-adjustments";
+    this.bAdjustBackwardBtn = this.buildAdjustButton("−0.5", () => {
+      this.handlers.onAdjustEndBackward();
+    });
+    this.bAdjustForwardBtn = this.buildAdjustButton("+0.5", () => {
+      this.handlers.onAdjustEndForward();
+    });
+    bAdjustments.appendChild(this.bAdjustBackwardBtn);
+    bAdjustments.appendChild(this.bAdjustForwardBtn);
+    this.bCardEl.appendChild(bAdjustments);
 
     metricsGrid.appendChild(this.nowCardEl);
     metricsGrid.appendChild(this.aCardEl);
@@ -393,6 +436,8 @@ export class FloatingPanel {
     const hasEnd = endTime !== null;
     const hasAnyRange = hasStart || hasEnd || enabled;
     const hasValidRange = hasStart && hasEnd && endTime > startTime;
+    const canAdjustStart = mediaDetected && hasStart;
+    const canAdjustEnd = mediaDetected && hasEnd;
 
     this.panelEl.classList.toggle("collapsed", collapsed);
 
@@ -411,6 +456,10 @@ export class FloatingPanel {
 
     this.setStartBtn.disabled = !mediaDetected;
     this.setEndBtn.disabled = !mediaDetected;
+    this.aAdjustBackwardBtn.disabled = !canAdjustStart;
+    this.aAdjustForwardBtn.disabled = !canAdjustStart;
+    this.bAdjustBackwardBtn.disabled = !canAdjustEnd;
+    this.bAdjustForwardBtn.disabled = !canAdjustEnd;
     this.toggleLoopBtn.disabled = !enabled && !hasValidRange;
     this.clearBtn.disabled = !hasAnyRange;
 

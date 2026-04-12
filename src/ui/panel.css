@@ -225,6 +225,47 @@
   line-height: 1.15;
 }
 
+.looplock-metric-adjustments {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.looplock-mini-adjust-btn {
+  border: none;
+  border-radius: 8px;
+  padding: 6px 6px;
+  cursor: pointer;
+  background: var(--ll-btn-bg);
+  color: var(--ll-text-main);
+  font-size: 11px;
+  font-weight: 700;
+  transition:
+    background 0.15s ease,
+    transform 0.12s ease,
+    opacity 0.15s ease;
+}
+
+.looplock-mini-adjust-btn:hover {
+  background: var(--ll-btn-hover-bg);
+}
+
+.looplock-mini-adjust-btn:active {
+  transform: scale(0.98);
+}
+
+.looplock-mini-adjust-btn:disabled {
+  cursor: not-allowed;
+  background: var(--ll-btn-disabled-bg);
+  color: var(--ll-btn-disabled-text);
+  transform: none;
+}
+
+.looplock-mini-adjust-btn:disabled:hover {
+  background: var(--ll-btn-disabled-bg);
+}
+
 .looplock-helper {
   padding: 8px 10px;
   border-radius: 10px;
