@@ -378,6 +378,10 @@ function setElementVisible(id: string, visible: boolean): void {
   el.style.display = visible ? "" : "none";
 }
 
+// =============================================================================
+// Popup theme responsibility
+// =============================================================================
+
 function applyPopupTheme(themeMode: ThemeMode): void {
   document.body.dataset.theme = themeMode;
 }
@@ -394,6 +398,40 @@ function applyThemeState(themeMode: ThemeMode): void {
   currentThemeMode = themeMode;
   applyPopupTheme(themeMode);
   setThemeButtons(themeMode);
+}
+
+async function loadPopupThemeState(): Promise<void> {
+  try {
+    currentThemeMode = await loadThemeMode();
+    applyThemeState(currentThemeMode);
+  } catch (error) {
+    console.warn("Failed to initialize popup theme.", error);
+    currentThemeMode = "dark";
+    applyThemeState(currentThemeMode);
+  }
+}
+
+async function persistPopupThemeState(themeMode: ThemeMode): Promise<void> {
+  try {
+    await saveThemeMode(themeMode);
+  } catch (error) {
+    console.warn("Failed to save popup theme.", error);
+  }
+}
+
+async function syncThemeToActiveTab(themeMode: ThemeMode): Promise<PopupStatusResponse | null> {
+  return await sendMessageToActiveTab({ type: "SET_THEME", themeMode });
+}
+
+async function applyThemeEverywhere(themeMode: ThemeMode): Promise<void> {
+  applyThemeState(themeMode);
+  await persistPopupThemeState(themeMode);
+
+  const tab = await getActiveTab();
+  const supported = isSupportedUrl(tab?.url);
+  const status = await syncThemeToActiveTab(themeMode);
+
+  renderStatus(status, supported);
 }
 
 // =============================================================================
@@ -741,22 +779,6 @@ async function showPanelAction(): Promise<void> {
   await refreshStatus();
 }
 
-async function applyThemeEverywhere(themeMode: ThemeMode): Promise<void> {
-  applyThemeState(themeMode);
-
-  try {
-    await saveThemeMode(themeMode);
-  } catch (error) {
-    console.warn("Failed to save popup theme.", error);
-  }
-
-  const tab = await getActiveTab();
-  const supported = isSupportedUrl(tab?.url);
-  const status = await sendMessageToActiveTab({ type: "SET_THEME", themeMode });
-
-  renderStatus(status, supported);
-}
-
 // =============================================================================
 // Event bindings
 // =============================================================================
@@ -887,14 +909,7 @@ async function initializePopup(): Promise<void> {
   setView("main");
   bindEvents();
 
-  try {
-    currentThemeMode = await loadThemeMode();
-    applyThemeState(currentThemeMode);
-  } catch (error) {
-    console.warn("Failed to initialize popup theme.", error);
-    currentThemeMode = "dark";
-    applyThemeState(currentThemeMode);
-  }
+  await loadPopupThemeState();
 
   try {
     shortcutSettings = loadShortcutSettingsFromLocal();
