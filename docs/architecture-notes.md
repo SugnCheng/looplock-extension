@@ -154,8 +154,28 @@ Popup theme must remain independently usable even if:
 - no media is detected
 - the floating panel is not open
 
-### Theme sync rule
-Popup theme may sync outward to content / panel, but popup theme must not depend on successful content sync in order to work locally.
+### Theme sync rule update
+
+Theme sync must not be restricted only to YouTube watch pages.
+
+There are two separate conditions:
+
+- **Session opening**
+  - watch page only
+- **Theme syncing**
+  - allowed on any YouTube page as long as the content runtime in the active tab is still reachable
+
+This matters because the floating panel may remain alive after leaving a watch page.
+In that case, popup theme changes should still attempt to sync to the active tab panel.
+
+### Practical rule
+
+When the popup theme changes:
+
+- popup theme must always update locally first
+- popup theme should then attempt to sync to the active tab
+- failure to sync must not block popup theme updates
+- watch-page eligibility must not be used as the sole gate for theme sync
 
 ---
 
@@ -329,6 +349,10 @@ A page can be unsupported or non-watch while still containing some media-related
 ### Risk 5: One-file convenience causing feature overlap
 Even if code remains in one file temporarily, responsibilities must still be treated separately.
 
+### Risk 6: Build pipeline assumptions bleeding across runtime surfaces
+Popup, background, and content script do not share identical loading rules.
+A build configuration that works for popup or background may still break content script injection.
+
 ---
 
 ## 7. Refactor Strategy
@@ -391,6 +415,41 @@ The following should remain protected for now:
 - do not rewrite content runtime architecture broadly
 - do not revert floating panel to destructive DOM rebuilds
 - do not expand to generic HTML5 during this cleanup stage
+
+---
+
+## 9.1 Build and Injection Rule
+
+LoopLock uses different runtime surfaces that must not be built with the exact same assumptions.
+
+### Background
+The background service worker may use module-based build behavior.
+
+### Popup
+The popup may use HTML entry handling and module-oriented app build behavior.
+
+### Content script
+The content script must be built as a directly injectable bundle for Chrome extension content script usage.
+
+### Important rule
+
+The content script output must not ship with unresolved top-level `import` statements.
+
+If `content.js` contains top-level `import` syntax, Chrome will fail to execute it as a normal injected content script, and popup/runtime communication will break.
+
+### Practical consequence
+
+If popup status becomes stuck at:
+
+- Unavailable
+- Panel unavailable
+- Media unavailable
+
+one of the first things to verify is:
+
+- whether the content script actually loaded
+- whether `dist/content.js` was built as an injectable single bundle
+- whether the extension was reloaded from the correct built output
 
 ---
 
