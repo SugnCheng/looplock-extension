@@ -19,7 +19,7 @@ let shortcutSettings: ShortcutSettings = getDefaultShortcutSettings();
 let currentThemeMode: ThemeMode = "dark";
 
 // =============================================================================
-// Shortcut settings utilities
+// Shortcut settings defaults / normalization
 // =============================================================================
 
 function getDefaultShortcutSettings(): ShortcutSettings {
@@ -164,6 +164,24 @@ function sanitizeShortcutSettings(
   };
 }
 
+function normalizeShortcutSettings(settings: ShortcutSettings): ShortcutSettings {
+  return sanitizeShortcutSettings(settings);
+}
+
+function areShortcutSettingsEqual(a: ShortcutSettings, b: ShortcutSettings): boolean {
+  const left = normalizeShortcutSettings(a);
+  const right = normalizeShortcutSettings(b);
+
+  return (
+    left.enabled === right.enabled &&
+    left.toggleEnabledShortcut === right.toggleEnabledShortcut &&
+    left.setStartShortcut === right.setStartShortcut &&
+    left.setEndShortcut === right.setEndShortcut &&
+    left.toggleLoopShortcut === right.toggleLoopShortcut &&
+    left.clearShortcut === right.clearShortcut
+  );
+}
+
 function serializeKeyboardEvent(event: KeyboardEvent): string {
   let primaryKey = "";
 
@@ -208,26 +226,46 @@ function serializeKeyboardEvent(event: KeyboardEvent): string {
   return parts.join("+");
 }
 
-function normalizeShortcutSettings(settings: ShortcutSettings): ShortcutSettings {
-  return sanitizeShortcutSettings(settings);
+// =============================================================================
+// Shortcut settings storage responsibility
+// =============================================================================
+
+function loadShortcutSettingsFromLocal(): ShortcutSettings {
+  try {
+    const raw = window.localStorage.getItem(SHORTCUT_SETTINGS_STORAGE_KEY);
+    if (!raw) return getDefaultShortcutSettings();
+
+    return sanitizeShortcutSettings(JSON.parse(raw) as Partial<ShortcutSettings>);
+  } catch (error) {
+    console.warn("Failed to load popup shortcut settings from localStorage.", error);
+    return getDefaultShortcutSettings();
+  }
 }
 
-function areShortcutSettingsEqual(a: ShortcutSettings, b: ShortcutSettings): boolean {
-  const left = normalizeShortcutSettings(a);
-  const right = normalizeShortcutSettings(b);
+function saveShortcutSettingsToLocal(settings: ShortcutSettings): void {
+  try {
+    window.localStorage.setItem(SHORTCUT_SETTINGS_STORAGE_KEY, JSON.stringify(settings));
+  } catch (error) {
+    console.warn("Failed to save popup shortcut settings to localStorage.", error);
+  }
+}
 
-  return (
-    left.enabled === right.enabled &&
-    left.toggleEnabledShortcut === right.toggleEnabledShortcut &&
-    left.setStartShortcut === right.setStartShortcut &&
-    left.setEndShortcut === right.setEndShortcut &&
-    left.toggleLoopShortcut === right.toggleLoopShortcut &&
-    left.clearShortcut === right.clearShortcut
-  );
+function loadShortcutState(): void {
+  try {
+    shortcutSettings = loadShortcutSettingsFromLocal();
+  } catch (error) {
+    console.warn("Failed to initialize shortcut settings.", error);
+    shortcutSettings = getDefaultShortcutSettings();
+  }
+}
+
+function persistShortcutStateLocally(): void {
+  shortcutSettings = sanitizeShortcutSettings(shortcutSettings);
+  saveShortcutSettingsToLocal(shortcutSettings);
 }
 
 // =============================================================================
-// Shortcut settings UI helpers
+// Shortcut settings UI metadata / helpers
 // =============================================================================
 
 function getShortcutEntries(settings: ShortcutSettings): Array<{
@@ -276,6 +314,22 @@ function getShortcutEntries(settings: ShortcutSettings): Array<{
   ];
 }
 
+function populateShortcutForm(settings: ShortcutSettings): void {
+  const enabledToggle = document.getElementById("shortcut-enabled-toggle") as HTMLInputElement | null;
+  const toggleEnabledInput = document.getElementById("shortcut-toggle-enabled-input") as HTMLInputElement | null;
+  const setStartInput = document.getElementById("shortcut-set-start-input") as HTMLInputElement | null;
+  const setEndInput = document.getElementById("shortcut-set-end-input") as HTMLInputElement | null;
+  const toggleLoopInput = document.getElementById("shortcut-toggle-loop-input") as HTMLInputElement | null;
+  const clearInput = document.getElementById("shortcut-clear-input") as HTMLInputElement | null;
+
+  if (enabledToggle) enabledToggle.checked = settings.enabled;
+  if (toggleEnabledInput) toggleEnabledInput.value = settings.toggleEnabledShortcut;
+  if (setStartInput) setStartInput.value = settings.setStartShortcut;
+  if (setEndInput) setEndInput.value = settings.setEndShortcut;
+  if (toggleLoopInput) toggleLoopInput.value = settings.toggleLoopShortcut;
+  if (clearInput) clearInput.value = settings.clearShortcut;
+}
+
 function clearShortcutConflictUi(): void {
   for (const entry of getShortcutEntries(shortcutSettings)) {
     const field = document.getElementById(entry.fieldId);
@@ -321,30 +375,6 @@ function renderShortcutConflictUi(): void {
         warning.textContent = `Conflicts with: ${conflictWith}`;
       }
     }
-  }
-}
-
-// =============================================================================
-// Shortcut settings persistence
-// =============================================================================
-
-function loadShortcutSettingsFromLocal(): ShortcutSettings {
-  try {
-    const raw = window.localStorage.getItem(SHORTCUT_SETTINGS_STORAGE_KEY);
-    if (!raw) return getDefaultShortcutSettings();
-
-    return sanitizeShortcutSettings(JSON.parse(raw) as Partial<ShortcutSettings>);
-  } catch (error) {
-    console.warn("Failed to load popup shortcut settings from localStorage.", error);
-    return getDefaultShortcutSettings();
-  }
-}
-
-function saveShortcutSettingsToLocal(settings: ShortcutSettings): void {
-  try {
-    window.localStorage.setItem(SHORTCUT_SETTINGS_STORAGE_KEY, JSON.stringify(settings));
-  } catch (error) {
-    console.warn("Failed to save popup shortcut settings to localStorage.", error);
   }
 }
 
@@ -497,24 +527,8 @@ function setView(nextView: PopupView): void {
 }
 
 // =============================================================================
-// Shortcut summary / settings rendering
+// Shortcut summary / runtime rendering
 // =============================================================================
-
-function populateShortcutForm(settings: ShortcutSettings): void {
-  const enabledToggle = document.getElementById("shortcut-enabled-toggle") as HTMLInputElement | null;
-  const toggleEnabledInput = document.getElementById("shortcut-toggle-enabled-input") as HTMLInputElement | null;
-  const setStartInput = document.getElementById("shortcut-set-start-input") as HTMLInputElement | null;
-  const setEndInput = document.getElementById("shortcut-set-end-input") as HTMLInputElement | null;
-  const toggleLoopInput = document.getElementById("shortcut-toggle-loop-input") as HTMLInputElement | null;
-  const clearInput = document.getElementById("shortcut-clear-input") as HTMLInputElement | null;
-
-  if (enabledToggle) enabledToggle.checked = settings.enabled;
-  if (toggleEnabledInput) toggleEnabledInput.value = settings.toggleEnabledShortcut;
-  if (setStartInput) setStartInput.value = settings.setStartShortcut;
-  if (setEndInput) setEndInput.value = settings.setEndShortcut;
-  if (toggleLoopInput) toggleLoopInput.value = settings.toggleLoopShortcut;
-  if (clearInput) clearInput.value = settings.clearShortcut;
-}
 
 function renderShortcutCardVisibility(): void {
   const enabled = shortcutSettings.enabled;
@@ -558,6 +572,12 @@ function renderShortcutRuntimeState(status: PopupStatusResponse | null, tabSuppo
   }
 
   setText("shortcut-runtime-mode-status", status.shortcutModeActive ? "Active" : "Off");
+}
+
+function renderShortcutUi(): void {
+  populateShortcutForm(shortcutSettings);
+  renderShortcutSummary();
+  renderShortcutConflictUi();
 }
 
 // =============================================================================
@@ -717,11 +737,8 @@ async function syncShortcutSettingsToActiveTab(): Promise<PopupStatusResponse | 
 // =============================================================================
 
 async function persistShortcutSettings(): Promise<void> {
-  shortcutSettings = sanitizeShortcutSettings(shortcutSettings);
-  saveShortcutSettingsToLocal(shortcutSettings);
-  populateShortcutForm(shortcutSettings);
-  renderShortcutSummary();
-  renderShortcutConflictUi();
+  persistShortcutStateLocally();
+  renderShortcutUi();
 
   const tab = await getActiveTab();
   const supported = isSupportedUrl(tab?.url);
@@ -733,9 +750,7 @@ async function persistShortcutSettings(): Promise<void> {
 async function resetShortcutSettingsToDefault(): Promise<void> {
   shortcutSettings = getDefaultShortcutSettings();
   saveShortcutSettingsToLocal(shortcutSettings);
-  populateShortcutForm(shortcutSettings);
-  renderShortcutSummary();
-  renderShortcutConflictUi();
+  renderShortcutUi();
 
   const tab = await getActiveTab();
   const supported = isSupportedUrl(tab?.url);
@@ -911,18 +926,8 @@ async function initializePopup(): Promise<void> {
 
   await loadPopupThemeState();
 
-  try {
-    shortcutSettings = loadShortcutSettingsFromLocal();
-    populateShortcutForm(shortcutSettings);
-    renderShortcutSummary();
-    renderShortcutConflictUi();
-  } catch (error) {
-    console.warn("Failed to initialize shortcut settings.", error);
-    shortcutSettings = getDefaultShortcutSettings();
-    populateShortcutForm(shortcutSettings);
-    renderShortcutSummary();
-    renderShortcutConflictUi();
-  }
+  loadShortcutState();
+  renderShortcutUi();
 
   await refreshStatus();
 }
