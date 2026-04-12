@@ -75,7 +75,7 @@ export class LoopController {
 
   setStartFromCurrentTime(): void {
     if (!this.media) {
-      this.errorMessage = "No media detected.";
+      this.errorMessage = "No video detected yet.";
       this.emitChange();
       return;
     }
@@ -86,7 +86,7 @@ export class LoopController {
     if (this.range.endTime !== null && this.range.endTime <= this.range.startTime) {
       this.range.enabled = false;
       this.stopInternalLoop();
-      this.errorMessage = "End time must be greater than start time.";
+      this.errorMessage = "B must be later than A.";
     }
 
     this.emitChange();
@@ -94,7 +94,7 @@ export class LoopController {
 
   setEndFromCurrentTime(): void {
     if (!this.media) {
-      this.errorMessage = "No media detected.";
+      this.errorMessage = "No video detected yet.";
       this.emitChange();
       return;
     }
@@ -105,7 +105,7 @@ export class LoopController {
     if (this.range.startTime !== null && this.range.endTime <= this.range.startTime) {
       this.range.enabled = false;
       this.stopInternalLoop();
-      this.errorMessage = "End time must be greater than start time.";
+      this.errorMessage = "B must be later than A.";
     }
 
     this.emitChange();
@@ -151,22 +151,22 @@ export class LoopController {
     const { startTime, endTime } = this.range;
 
     if (!this.media) {
-      if (setError) this.errorMessage = "No media detected.";
+      if (setError) this.errorMessage = "No video detected yet.";
       return false;
     }
 
     if (startTime === null || endTime === null) {
-      if (setError) this.errorMessage = "Please set both A and B points.";
+      if (setError) this.errorMessage = "Set both A and B before turning loop on.";
       return false;
     }
 
     if (startTime < 0) {
-      if (setError) this.errorMessage = "Start time cannot be negative.";
+      if (setError) this.errorMessage = "A cannot be earlier than the start of the video.";
       return false;
     }
 
     if (endTime <= startTime) {
-      if (setError) this.errorMessage = "End time must be greater than start time.";
+      if (setError) this.errorMessage = "B must be later than A.";
       return false;
     }
 
