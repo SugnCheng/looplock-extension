@@ -408,6 +408,10 @@ function setElementVisible(id: string, visible: boolean): void {
   el.style.display = visible ? "" : "none";
 }
 
+function closePopupWindow(): void {
+  window.close();
+}
+
 // =============================================================================
 // Popup theme responsibility
 // =============================================================================
@@ -617,7 +621,7 @@ function renderActiveStatusCopy(status: PopupStatusResponse): void {
   setHeroCopy(
     "LoopLock is active on this tab.",
     status.mediaDetected
-      ? "Use the floating panel to set A/B points, loop playback, or exit with ✕."
+      ? "Use the floating panel to set A-B points, loop playback, or exit with ✕."
       : "LoopLock is open, but media has not been detected yet on this page."
   );
   setTipText("Tip: drag the panel to your preferred spot — its position now stays saved.");
@@ -637,7 +641,7 @@ function renderReadyStatusCopy(status: PopupStatusResponse): void {
   setHeroCopy(
     "This page is ready for LoopLock.",
     status.mediaDetected
-      ? "Open LoopLock to start setting A/B points for the current video."
+      ? "Open LoopLock to start setting A-B points for the current video."
       : "Open LoopLock now, and media detection will continue as the page finishes loading."
   );
   setTipText("LoopLock starts only when you choose to open it from the popup.");
@@ -715,6 +719,10 @@ async function sendMessageToActiveTab(message: ContentMessage): Promise<PopupSta
   }
 }
 
+// =============================================================================
+// Popup runtime actions
+// =============================================================================
+
 async function syncShortcutSettingsToActiveTab(): Promise<PopupStatusResponse | null> {
   const tab = await getActiveTab();
   const supported = isSupportedUrl(tab?.url);
@@ -731,10 +739,6 @@ async function syncShortcutSettingsToActiveTab(): Promise<PopupStatusResponse | 
     return null;
   }
 }
-
-// =============================================================================
-// Popup runtime actions
-// =============================================================================
 
 async function persistShortcutSettings(): Promise<void> {
   persistShortcutStateLocally();
@@ -777,21 +781,34 @@ async function refreshStatus(): Promise<void> {
   renderStatus(status, true);
 }
 
-async function renderActionResult(message: ContentMessage): Promise<void> {
+async function renderActionResult(message: ContentMessage): Promise<PopupStatusResponse | null> {
   const status = await sendMessageToActiveTab(message);
   const tab = await getActiveTab();
   const supported = isSupportedUrl(tab?.url);
   renderStatus(status, supported);
+  return status;
+}
+
+function shouldClosePopupAfterAction(status: PopupStatusResponse | null): boolean {
+  return Boolean(status?.looplockEnabled && status?.panelVisible);
 }
 
 async function openLoopLockAction(): Promise<void> {
-  await renderActionResult({ type: "OPEN_LOOPLOCK" });
+  const status = await renderActionResult({ type: "OPEN_LOOPLOCK" });
   await refreshStatus();
+
+  if (shouldClosePopupAfterAction(status)) {
+    closePopupWindow();
+  }
 }
 
 async function showPanelAction(): Promise<void> {
-  await renderActionResult({ type: "SHOW_PANEL" });
+  const status = await renderActionResult({ type: "SHOW_PANEL" });
   await refreshStatus();
+
+  if (shouldClosePopupAfterAction(status)) {
+    closePopupWindow();
+  }
 }
 
 // =============================================================================
