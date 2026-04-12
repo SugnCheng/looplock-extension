@@ -117,7 +117,6 @@ function sanitizeShortcutString(value: string): string {
         primaryKey = "ArrowUp";
         break;
       case "arrowdown":
-      case "down":
         primaryKey = "ArrowDown";
         break;
       case "arrowleft":
@@ -617,7 +616,7 @@ function renderStatus(status: PopupStatusResponse | null, tabSupported: boolean)
 }
 
 // =============================================================================
-// Popup runtime messaging / actions
+// Popup runtime messaging helpers
 // =============================================================================
 
 async function sendMessageToActiveTab(message: ContentMessage): Promise<PopupStatusResponse | null> {
@@ -648,6 +647,10 @@ async function syncShortcutSettingsToActiveTab(): Promise<PopupStatusResponse | 
     return null;
   }
 }
+
+// =============================================================================
+// Popup runtime actions
+// =============================================================================
 
 async function persistShortcutSettings(): Promise<void> {
   shortcutSettings = sanitizeShortcutSettings(shortcutSettings);
@@ -695,11 +698,21 @@ async function refreshStatus(): Promise<void> {
   renderStatus(status, true);
 }
 
-async function runAction(message: ContentMessage): Promise<void> {
+async function renderActionResult(message: ContentMessage): Promise<void> {
   const status = await sendMessageToActiveTab(message);
   const tab = await getActiveTab();
   const supported = isSupportedUrl(tab?.url);
   renderStatus(status, supported);
+}
+
+async function openLoopLockAction(): Promise<void> {
+  await renderActionResult({ type: "OPEN_LOOPLOCK" });
+  await refreshStatus();
+}
+
+async function showPanelAction(): Promise<void> {
+  await renderActionResult({ type: "SHOW_PANEL" });
+  await refreshStatus();
 }
 
 async function applyThemeEverywhere(themeMode: ThemeMode): Promise<void> {
@@ -798,21 +811,21 @@ function bindShortcutSettingsEvents(): void {
   bindShortcutCaptureInputs();
 }
 
-function bindEvents(): void {
+function bindSessionActionEvents(): void {
   document.getElementById("open-looplock-btn")?.addEventListener("click", async () => {
     const currentButtonText =
       (document.getElementById("open-looplock-btn") as HTMLButtonElement | null)?.textContent ?? "";
 
     if (currentButtonText === "Show Panel") {
-      await runAction({ type: "SHOW_PANEL" });
-      await refreshStatus();
+      await showPanelAction();
       return;
     }
 
-    await runAction({ type: "OPEN_LOOPLOCK" });
-    await refreshStatus();
+    await openLoopLockAction();
   });
+}
 
+function bindThemeEvents(): void {
   document.getElementById("theme-dark-btn")?.addEventListener("click", async () => {
     await applyThemeEverywhere("dark");
   });
@@ -820,7 +833,9 @@ function bindEvents(): void {
   document.getElementById("theme-light-btn")?.addEventListener("click", async () => {
     await applyThemeEverywhere("light");
   });
+}
 
+function bindViewEvents(): void {
   document.getElementById("open-settings-btn")?.addEventListener("click", () => {
     setView("settings");
   });
@@ -829,7 +844,12 @@ function bindEvents(): void {
     setView("main");
     void refreshStatus();
   });
+}
 
+function bindEvents(): void {
+  bindSessionActionEvents();
+  bindThemeEvents();
+  bindViewEvents();
   bindShortcutSettingsEvents();
 }
 
