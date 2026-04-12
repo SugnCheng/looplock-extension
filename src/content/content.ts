@@ -56,6 +56,29 @@ const loopController = new LoopController(({ range, errorMessage, currentTime })
   renderPanel();
 });
 
+function nudgeCurrentTime(deltaSeconds: number): void {
+  const media = loopController.getMedia();
+
+  if (!media) {
+    runtime.panelState.errorMessage = "No video detected yet.";
+    syncPanel();
+    return;
+  }
+
+  const duration =
+    Number.isFinite(media.duration) && media.duration > 0 ? media.duration : null;
+
+  const nextTimeRaw = media.currentTime + deltaSeconds;
+  const nextTime =
+    duration === null
+      ? Math.max(0, nextTimeRaw)
+      : Math.min(Math.max(0, nextTimeRaw), duration);
+
+  media.currentTime = nextTime;
+  runtime.panelState.errorMessage = null;
+  syncPanel();
+}
+
 const panel = new FloatingPanel(runtime.panelState, {
   getInitialPosition: () => runtime.panelPosition,
   onPositionChange: async (position) => {
@@ -66,6 +89,14 @@ const panel = new FloatingPanel(runtime.panelState, {
     } catch (error) {
       logger.warn("Failed to save panel position:", error);
     }
+  },
+  onAdjustCurrentBackward: () => {
+    if (!runtime.looplockEnabled) return;
+    nudgeCurrentTime(-PANEL_TIME_NUDGE_SECONDS);
+  },
+  onAdjustCurrentForward: () => {
+    if (!runtime.looplockEnabled) return;
+    nudgeCurrentTime(PANEL_TIME_NUDGE_SECONDS);
   },
   onSetStart: () => {
     if (!runtime.looplockEnabled) return;

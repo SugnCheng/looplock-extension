@@ -3,76 +3,114 @@
   left: 0;
   top: 0;
   z-index: 2147483647;
-  font-family: Arial, sans-serif;
+  font-family:
+    "Segoe UI",
+    Inter,
+    Arial,
+    sans-serif;
   transition: opacity 0.18s ease, transform 0.18s ease;
 
-  --ll-bg-main: rgba(18, 21, 28, 0.94);
-  --ll-bg-panel-accent: rgba(98, 114, 255, 0.12);
-  --ll-border: rgba(255, 255, 255, 0.1);
-  --ll-header-bg-top: rgba(255, 255, 255, 0.08);
-  --ll-header-bg-bottom: rgba(255, 255, 255, 0.04);
-  --ll-text-main: #ffffff;
-  --ll-text-sub: #b7bfd0;
-  --ll-card-bg: rgba(255, 255, 255, 0.045);
-  --ll-card-border: rgba(255, 255, 255, 0.04);
-  --ll-card-hover-bg: rgba(255, 255, 255, 0.06);
-  --ll-card-hover-border: rgba(255, 255, 255, 0.07);
-  --ll-now-bg: rgba(105, 121, 255, 0.12);
-  --ll-now-border: rgba(105, 121, 255, 0.2);
-  --ll-btn-bg: rgba(255, 255, 255, 0.08);
-  --ll-btn-hover-bg: rgba(255, 255, 255, 0.14);
-  --ll-btn-disabled-bg: rgba(255, 255, 255, 0.04);
-  --ll-btn-disabled-text: rgba(255, 255, 255, 0.42);
-  --ll-status-ok-bg: rgba(46, 204, 113, 0.18);
-  --ll-status-ok-text: #8cffbe;
-  --ll-status-off-bg: rgba(231, 76, 60, 0.18);
-  --ll-status-off-text: #ffaea4;
-  --ll-error-bg: rgba(231, 76, 60, 0.18);
-  --ll-error-text: #ffb9af;
-  --ll-helper-bg: rgba(255, 255, 255, 0.04);
-  --ll-helper-text: #c3cad8;
+  --ll-bg-main: rgba(19, 22, 29, 0.96);
+  --ll-bg-panel-accent: rgba(92, 110, 210, 0.06);
+  --ll-border: rgba(255, 255, 255, 0.09);
+  --ll-border-strong: rgba(255, 255, 255, 0.14);
+  --ll-header-bg: rgba(255, 255, 255, 0.035);
+
+  --ll-text-main: #f3f5f8;
+  --ll-text-sub: #a7b0bf;
+  --ll-text-soft: #838da0;
+
+  --ll-card-bg: rgba(255, 255, 255, 0.03);
+  --ll-card-border: rgba(255, 255, 255, 0.05);
+  --ll-card-hover-bg: rgba(255, 255, 255, 0.042);
+  --ll-card-hover-border: rgba(255, 255, 255, 0.08);
+
+  --ll-now-bg: rgba(92, 110, 210, 0.08);
+  --ll-now-border: rgba(92, 110, 210, 0.14);
+
+  --ll-btn-bg: rgba(255, 255, 255, 0.06);
+  --ll-btn-hover-bg: rgba(255, 255, 255, 0.1);
+  --ll-btn-disabled-bg: rgba(255, 255, 255, 0.03);
+  --ll-btn-disabled-text: rgba(255, 255, 255, 0.35);
+
+  --ll-status-ok-bg: rgba(55, 170, 104, 0.14);
+  --ll-status-ok-text: #8fd5ab;
+  --ll-status-off-bg: rgba(255, 181, 72, 0.12);
+  --ll-status-off-text: #dfbe79;
+
+  --ll-error-bg: rgba(212, 76, 66, 0.14);
+  --ll-error-text: #e9aaa2;
+
+  --ll-helper-bg: rgba(255, 255, 255, 0.03);
+  --ll-helper-text: #bcc4d1;
+
+  --ll-primary-bg: rgba(92, 110, 210, 0.9);
+  --ll-primary-bg-hover: rgba(102, 120, 223, 0.94);
+  --ll-primary-shadow: rgba(64, 82, 164, 0.16);
+
+  --ll-success-bg: rgba(58, 168, 106, 0.92);
+  --ll-success-bg-hover: rgba(65, 178, 113, 0.95);
+  --ll-success-shadow: rgba(45, 133, 84, 0.14);
 }
 
 #looplock-root[data-theme="light"] {
-  --ll-bg-main: rgba(247, 249, 252, 0.96);
-  --ll-bg-panel-accent: rgba(90, 109, 255, 0.08);
-  --ll-border: rgba(25, 34, 48, 0.08);
-  --ll-header-bg-top: rgba(25, 34, 48, 0.05);
-  --ll-header-bg-bottom: rgba(25, 34, 48, 0.02);
-  --ll-text-main: #1d2430;
-  --ll-text-sub: #667085;
-  --ll-card-bg: rgba(25, 34, 48, 0.03);
-  --ll-card-border: rgba(25, 34, 48, 0.05);
-  --ll-card-hover-bg: rgba(25, 34, 48, 0.05);
-  --ll-card-hover-border: rgba(25, 34, 48, 0.08);
-  --ll-now-bg: rgba(105, 121, 255, 0.1);
-  --ll-now-border: rgba(105, 121, 255, 0.18);
-  --ll-btn-bg: rgba(25, 34, 48, 0.06);
-  --ll-btn-hover-bg: rgba(25, 34, 48, 0.1);
-  --ll-btn-disabled-bg: rgba(25, 34, 48, 0.035);
-  --ll-btn-disabled-text: rgba(29, 36, 48, 0.38);
-  --ll-status-ok-bg: rgba(46, 204, 113, 0.15);
-  --ll-status-ok-text: #13884b;
-  --ll-status-off-bg: rgba(231, 76, 60, 0.14);
-  --ll-status-off-text: #b9382c;
-  --ll-error-bg: rgba(231, 76, 60, 0.12);
-  --ll-error-text: #b9382c;
-  --ll-helper-bg: rgba(25, 34, 48, 0.04);
-  --ll-helper-text: #5f6c80;
+  --ll-bg-main: rgba(249, 250, 252, 0.98);
+  --ll-bg-panel-accent: rgba(92, 110, 210, 0.035);
+  --ll-border: rgba(30, 41, 59, 0.08);
+  --ll-border-strong: rgba(30, 41, 59, 0.12);
+  --ll-header-bg: rgba(30, 41, 59, 0.025);
+
+  --ll-text-main: #1f2937;
+  --ll-text-sub: #667285;
+  --ll-text-soft: #8a94a4;
+
+  --ll-card-bg: rgba(30, 41, 59, 0.025);
+  --ll-card-border: rgba(30, 41, 59, 0.05);
+  --ll-card-hover-bg: rgba(30, 41, 59, 0.04);
+  --ll-card-hover-border: rgba(30, 41, 59, 0.075);
+
+  --ll-now-bg: rgba(92, 110, 210, 0.06);
+  --ll-now-border: rgba(92, 110, 210, 0.12);
+
+  --ll-btn-bg: rgba(30, 41, 59, 0.05);
+  --ll-btn-hover-bg: rgba(30, 41, 59, 0.085);
+  --ll-btn-disabled-bg: rgba(30, 41, 59, 0.03);
+  --ll-btn-disabled-text: rgba(31, 41, 55, 0.32);
+
+  --ll-status-ok-bg: rgba(55, 170, 104, 0.11);
+  --ll-status-ok-text: #277a4f;
+  --ll-status-off-bg: rgba(255, 181, 72, 0.11);
+  --ll-status-off-text: #9a6a17;
+
+  --ll-error-bg: rgba(212, 76, 66, 0.1);
+  --ll-error-text: #b64338;
+
+  --ll-helper-bg: rgba(30, 41, 59, 0.03);
+  --ll-helper-text: #5f6b7c;
+
+  --ll-primary-bg: rgba(92, 110, 210, 0.9);
+  --ll-primary-bg-hover: rgba(102, 120, 223, 0.94);
+  --ll-primary-shadow: rgba(64, 82, 164, 0.1);
+
+  --ll-success-bg: rgba(58, 168, 106, 0.9);
+  --ll-success-bg-hover: rgba(65, 178, 113, 0.94);
+  --ll-success-shadow: rgba(45, 133, 84, 0.09);
 }
 
 .looplock-panel {
-  width: 224px;
+  width: 236px;
   min-height: 0;
   background:
-    radial-gradient(circle at top left, var(--ll-bg-panel-accent), transparent 38%),
+    radial-gradient(circle at top left, var(--ll-bg-panel-accent), transparent 42%),
     var(--ll-bg-main);
   color: var(--ll-text-main);
   border: 1px solid var(--ll-border);
   border-radius: 16px;
-  box-shadow: 0 16px 34px rgba(0, 0, 0, 0.22);
+  box-shadow:
+    0 14px 28px rgba(0, 0, 0, 0.16),
+    0 4px 10px rgba(0, 0, 0, 0.08);
   padding: 12px;
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(12px);
   transition:
     box-shadow 0.18s ease,
     transform 0.18s ease,
@@ -84,11 +122,13 @@
 }
 
 .looplock-panel:hover {
-  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.26);
+  box-shadow:
+    0 16px 32px rgba(0, 0, 0, 0.18),
+    0 6px 12px rgba(0, 0, 0, 0.09);
 }
 
 .looplock-panel.collapsed {
-  width: 208px;
+  width: 212px;
 }
 
 .looplock-panel.looplock-panel-enter {
@@ -99,10 +139,9 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin: -12px -12px 10px -12px;
+  margin: -12px -12px 12px -12px;
   padding: 10px 12px;
-  background:
-    linear-gradient(180deg, var(--ll-header-bg-top), var(--ll-header-bg-bottom));
+  background: var(--ll-header-bg);
   border-bottom: 1px solid var(--ll-border);
   border-radius: 16px 16px 0 0;
 }
@@ -113,7 +152,7 @@
 }
 
 .looplock-drag-handle:hover {
-  filter: brightness(1.03);
+  filter: brightness(1.015);
 }
 
 .looplock-title-wrap {
@@ -123,15 +162,16 @@
 }
 
 .looplock-title {
-  font-weight: 700;
+  font-weight: 600;
   font-size: 14px;
-  letter-spacing: 0.2px;
+  letter-spacing: 0.08px;
 }
 
 .looplock-drag-hint {
   font-size: 10px;
-  color: var(--ll-text-sub);
-  letter-spacing: 0.2px;
+  color: var(--ll-text-soft);
+  letter-spacing: 0.16px;
+  font-weight: 400;
 }
 
 .looplock-header-right {
@@ -142,37 +182,46 @@
 
 .looplock-status {
   font-size: 10px;
-  padding: 3px 7px;
+  padding: 4px 8px;
   border-radius: 999px;
-  font-weight: 700;
+  font-weight: 600;
+  letter-spacing: 0.16px;
   transition: all 0.18s ease;
+  border: 1px solid transparent;
 }
 
 .looplock-status.ok {
   background: var(--ll-status-ok-bg);
   color: var(--ll-status-ok-text);
+  border-color: rgba(55, 170, 104, 0.12);
 }
 
 .looplock-status.off {
   background: var(--ll-status-off-bg);
   color: var(--ll-status-off-text);
+  border-color: rgba(255, 181, 72, 0.1);
 }
 
 .looplock-collapse-btn,
 .looplock-close-btn {
-  width: 23px;
-  height: 23px;
-  border: none;
+  width: 24px;
+  height: 24px;
+  border: 1px solid transparent;
   border-radius: 7px;
   background: var(--ll-btn-bg);
   color: var(--ll-text-main);
   cursor: pointer;
-  transition: background 0.15s ease, transform 0.12s ease;
+  transition:
+    background 0.15s ease,
+    transform 0.12s ease,
+    border-color 0.15s ease;
+  font-weight: 500;
 }
 
 .looplock-collapse-btn:hover,
 .looplock-close-btn:hover {
   background: var(--ll-btn-hover-bg);
+  border-color: var(--ll-border-strong);
 }
 
 .looplock-collapse-btn:active,
@@ -188,15 +237,18 @@
 
 .looplock-metrics-grid {
   display: grid;
-  gap: 5px;
+  gap: 6px;
 }
 
 .looplock-metric-card {
-  padding: 7px 10px;
-  border-radius: 11px;
+  padding: 8px 10px;
+  border-radius: 12px;
   background: var(--ll-card-bg);
   border: 1px solid var(--ll-card-border);
-  transition: background 0.18s ease, border-color 0.18s ease;
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    transform 0.14s ease;
   text-align: center;
 }
 
@@ -212,43 +264,70 @@
 
 .looplock-metric-label {
   font-size: 9px;
-  color: var(--ll-text-sub);
-  margin-bottom: 3px;
+  color: var(--ll-text-soft);
+  margin-bottom: 5px;
   letter-spacing: 0.24px;
   text-transform: uppercase;
+  font-weight: 500;
+}
+
+.looplock-metric-content-row {
+  display: grid;
+  grid-template-columns: 58px 1fr 58px;
+  align-items: center;
+  gap: 6px;
+}
+
+.looplock-metric-control-slot {
+  display: flex;
+  align-items: center;
+}
+
+.looplock-metric-control-slot.left {
+  justify-content: flex-start;
+}
+
+.looplock-metric-control-slot.right {
+  justify-content: flex-end;
 }
 
 .looplock-metric-value {
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--ll-text-main);
   line-height: 1.15;
+  text-align: center;
 }
 
-.looplock-metric-adjustments {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
-  margin-top: 8px;
+.looplock-metric-value span {
+  display: inline-block;
+  min-width: 78px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.08px;
 }
 
 .looplock-mini-adjust-btn {
-  border: none;
-  border-radius: 8px;
-  padding: 6px 6px;
+  min-width: 50px;
+  height: 25px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  padding: 0 6px;
   cursor: pointer;
   background: var(--ll-btn-bg);
   color: var(--ll-text-main);
-  font-size: 11px;
-  font-weight: 700;
+  font-size: 10px;
+  font-weight: 500;
+  line-height: 1;
   transition:
     background 0.15s ease,
     transform 0.12s ease,
-    opacity 0.15s ease;
+    opacity 0.15s ease,
+    border-color 0.15s ease;
 }
 
 .looplock-mini-adjust-btn:hover {
   background: var(--ll-btn-hover-bg);
+  border-color: var(--ll-border-strong);
 }
 
 .looplock-mini-adjust-btn:active {
@@ -259,6 +338,7 @@
   cursor: not-allowed;
   background: var(--ll-btn-disabled-bg);
   color: var(--ll-btn-disabled-text);
+  border-color: transparent;
   transform: none;
 }
 
@@ -267,23 +347,27 @@
 }
 
 .looplock-helper {
-  padding: 8px 10px;
+  padding: 9px 10px;
   border-radius: 10px;
   background: var(--ll-helper-bg);
   color: var(--ll-helper-text);
   font-size: 11px;
-  line-height: 1.4;
+  line-height: 1.42;
+  border: 1px solid rgba(255, 255, 255, 0.025);
   animation: looplockFadeIn 0.18s ease;
+  font-weight: 400;
 }
 
 .looplock-error {
-  padding: 8px 10px;
+  padding: 9px 10px;
   border-radius: 10px;
   background: var(--ll-error-bg);
   color: var(--ll-error-text);
   font-size: 11px;
-  line-height: 1.4;
+  line-height: 1.42;
+  border: 1px solid rgba(212, 76, 66, 0.12);
   animation: looplockFadeIn 0.18s ease;
+  font-weight: 400;
 }
 
 .looplock-actions {
@@ -294,23 +378,25 @@
 }
 
 .looplock-action-btn {
-  border: none;
-  border-radius: 11px;
+  border: 1px solid transparent;
+  border-radius: 10px;
   padding: 11px 10px;
   cursor: pointer;
   background: var(--ll-btn-bg);
   color: var(--ll-text-main);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 500;
   transition:
     background 0.15s ease,
     transform 0.12s ease,
     box-shadow 0.15s ease,
+    border-color 0.15s ease,
     opacity 0.15s ease;
 }
 
 .looplock-action-btn:hover {
   background: var(--ll-btn-hover-bg);
+  border-color: var(--ll-border-strong);
 }
 
 .looplock-action-btn:active {
@@ -322,6 +408,7 @@
   background: var(--ll-btn-disabled-bg);
   color: var(--ll-btn-disabled-text);
   box-shadow: none;
+  border-color: transparent;
   transform: none;
 }
 
@@ -331,13 +418,14 @@
 }
 
 .looplock-primary-action {
-  background: linear-gradient(135deg, rgba(105, 121, 255, 0.88), rgba(85, 99, 232, 0.88));
-  color: white;
-  box-shadow: 0 8px 16px rgba(89, 104, 240, 0.22);
+  background: var(--ll-primary-bg);
+  color: #ffffff;
+  box-shadow: 0 8px 16px var(--ll-primary-shadow);
 }
 
 .looplock-primary-action:hover {
-  filter: brightness(1.05);
+  background: var(--ll-primary-bg-hover);
+  border-color: transparent;
 }
 
 .looplock-primary-action:disabled {
@@ -348,13 +436,14 @@
 }
 
 .looplock-loop-active {
-  background: linear-gradient(135deg, rgba(70, 205, 128, 0.92), rgba(44, 170, 102, 0.92));
-  color: white;
-  box-shadow: 0 8px 16px rgba(47, 185, 112, 0.22);
+  background: var(--ll-success-bg);
+  color: #ffffff;
+  box-shadow: 0 8px 16px var(--ll-success-shadow);
 }
 
 .looplock-loop-active:hover {
-  filter: brightness(1.04);
+  background: var(--ll-success-bg-hover);
+  border-color: transparent;
 }
 
 .looplock-loop-active:disabled {

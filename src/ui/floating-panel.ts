@@ -5,6 +5,8 @@ import { formatTime } from "./time-utils";
 interface PanelHandlers {
   getInitialPosition: () => PanelPosition | null | undefined;
   onPositionChange: (position: PanelPosition) => void | Promise<void>;
+  onAdjustCurrentBackward: () => void;
+  onAdjustCurrentForward: () => void;
   onSetStart: () => void;
   onSetEnd: () => void;
   onAdjustStartBackward: () => void;
@@ -34,6 +36,8 @@ export class FloatingPanel {
   private nowValueEl!: HTMLSpanElement;
   private aValueEl!: HTMLSpanElement;
   private bValueEl!: HTMLSpanElement;
+  private nowAdjustBackwardBtn!: HTMLButtonElement;
+  private nowAdjustForwardBtn!: HTMLButtonElement;
   private aAdjustBackwardBtn!: HTMLButtonElement;
   private aAdjustForwardBtn!: HTMLButtonElement;
   private bAdjustBackwardBtn!: HTMLButtonElement;
@@ -117,6 +121,47 @@ export class FloatingPanel {
     return btn;
   }
 
+  private buildMetricCard(
+    labelText: string,
+    extraClassName = ""
+  ): {
+    card: HTMLDivElement;
+    valueEl: HTMLSpanElement;
+    leftSlot: HTMLDivElement;
+    rightSlot: HTMLDivElement;
+  } {
+    const card = document.createElement("div");
+    card.className = `looplock-metric-card ${extraClassName}`.trim();
+
+    const label = document.createElement("div");
+    label.className = "looplock-metric-label";
+    label.textContent = labelText;
+
+    const contentRow = document.createElement("div");
+    contentRow.className = "looplock-metric-content-row";
+
+    const leftSlot = document.createElement("div");
+    leftSlot.className = "looplock-metric-control-slot left";
+
+    const valueWrap = document.createElement("div");
+    valueWrap.className = "looplock-metric-value";
+
+    const valueEl = document.createElement("span");
+    valueWrap.appendChild(valueEl);
+
+    const rightSlot = document.createElement("div");
+    rightSlot.className = "looplock-metric-control-slot right";
+
+    contentRow.appendChild(leftSlot);
+    contentRow.appendChild(valueWrap);
+    contentRow.appendChild(rightSlot);
+
+    card.appendChild(label);
+    card.appendChild(contentRow);
+
+    return { card, valueEl, leftSlot, rightSlot };
+  }
+
   private build(): void {
     this.root.innerHTML = "";
 
@@ -177,53 +222,56 @@ export class FloatingPanel {
     const metricsGrid = document.createElement("div");
     metricsGrid.className = "looplock-metrics-grid";
 
-    this.nowCardEl = document.createElement("div");
-    this.nowCardEl.className = "looplock-metric-card looplock-now-card";
-    this.nowCardEl.innerHTML = `
-      <div class="looplock-metric-label">Now</div>
-      <div class="looplock-metric-value"><span></span></div>
-    `;
-    this.nowValueEl = this.nowCardEl.querySelector("span") as HTMLSpanElement;
+    const nowMetric = this.buildMetricCard("Now", "looplock-now-card");
+    this.nowCardEl = nowMetric.card;
+    this.nowValueEl = nowMetric.valueEl;
 
-    this.aCardEl = document.createElement("div");
-    this.aCardEl.className = "looplock-metric-card";
-    this.aCardEl.innerHTML = `
-      <div class="looplock-metric-label">A</div>
-      <div class="looplock-metric-value"><span></span></div>
-    `;
-    this.aValueEl = this.aCardEl.querySelector("span") as HTMLSpanElement;
+    this.nowAdjustBackwardBtn = this.buildAdjustButton("-0.5", () => {
+      this.handlers.onAdjustCurrentBackward();
+    });
+    this.nowAdjustBackwardBtn.title = "Now -0.5s";
 
-    const aAdjustments = document.createElement("div");
-    aAdjustments.className = "looplock-metric-adjustments";
-    this.aAdjustBackwardBtn = this.buildAdjustButton("−0.5", () => {
+    this.nowAdjustForwardBtn = this.buildAdjustButton("+0.5", () => {
+      this.handlers.onAdjustCurrentForward();
+    });
+    this.nowAdjustForwardBtn.title = "Now +0.5s";
+
+    nowMetric.leftSlot.appendChild(this.nowAdjustBackwardBtn);
+    nowMetric.rightSlot.appendChild(this.nowAdjustForwardBtn);
+
+    const aMetric = this.buildMetricCard("A");
+    this.aCardEl = aMetric.card;
+    this.aValueEl = aMetric.valueEl;
+
+    this.aAdjustBackwardBtn = this.buildAdjustButton("-0.5", () => {
       this.handlers.onAdjustStartBackward();
     });
+    this.aAdjustBackwardBtn.title = "A -0.5s";
+
     this.aAdjustForwardBtn = this.buildAdjustButton("+0.5", () => {
       this.handlers.onAdjustStartForward();
     });
-    aAdjustments.appendChild(this.aAdjustBackwardBtn);
-    aAdjustments.appendChild(this.aAdjustForwardBtn);
-    this.aCardEl.appendChild(aAdjustments);
+    this.aAdjustForwardBtn.title = "A +0.5s";
 
-    this.bCardEl = document.createElement("div");
-    this.bCardEl.className = "looplock-metric-card";
-    this.bCardEl.innerHTML = `
-      <div class="looplock-metric-label">B</div>
-      <div class="looplock-metric-value"><span></span></div>
-    `;
-    this.bValueEl = this.bCardEl.querySelector("span") as HTMLSpanElement;
+    aMetric.leftSlot.appendChild(this.aAdjustBackwardBtn);
+    aMetric.rightSlot.appendChild(this.aAdjustForwardBtn);
 
-    const bAdjustments = document.createElement("div");
-    bAdjustments.className = "looplock-metric-adjustments";
-    this.bAdjustBackwardBtn = this.buildAdjustButton("−0.5", () => {
+    const bMetric = this.buildMetricCard("B");
+    this.bCardEl = bMetric.card;
+    this.bValueEl = bMetric.valueEl;
+
+    this.bAdjustBackwardBtn = this.buildAdjustButton("-0.5", () => {
       this.handlers.onAdjustEndBackward();
     });
+    this.bAdjustBackwardBtn.title = "B -0.5s";
+
     this.bAdjustForwardBtn = this.buildAdjustButton("+0.5", () => {
       this.handlers.onAdjustEndForward();
     });
-    bAdjustments.appendChild(this.bAdjustBackwardBtn);
-    bAdjustments.appendChild(this.bAdjustForwardBtn);
-    this.bCardEl.appendChild(bAdjustments);
+    this.bAdjustForwardBtn.title = "B +0.5s";
+
+    bMetric.leftSlot.appendChild(this.bAdjustBackwardBtn);
+    bMetric.rightSlot.appendChild(this.bAdjustForwardBtn);
 
     metricsGrid.appendChild(this.nowCardEl);
     metricsGrid.appendChild(this.aCardEl);
@@ -436,6 +484,7 @@ export class FloatingPanel {
     const hasEnd = endTime !== null;
     const hasAnyRange = hasStart || hasEnd || enabled;
     const hasValidRange = hasStart && hasEnd && endTime > startTime;
+    const canAdjustCurrent = mediaDetected;
     const canAdjustStart = mediaDetected && hasStart;
     const canAdjustEnd = mediaDetected && hasEnd;
 
@@ -456,6 +505,8 @@ export class FloatingPanel {
 
     this.setStartBtn.disabled = !mediaDetected;
     this.setEndBtn.disabled = !mediaDetected;
+    this.nowAdjustBackwardBtn.disabled = !canAdjustCurrent;
+    this.nowAdjustForwardBtn.disabled = !canAdjustCurrent;
     this.aAdjustBackwardBtn.disabled = !canAdjustStart;
     this.aAdjustForwardBtn.disabled = !canAdjustStart;
     this.bAdjustBackwardBtn.disabled = !canAdjustEnd;
