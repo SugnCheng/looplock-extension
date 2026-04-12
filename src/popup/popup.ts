@@ -523,10 +523,10 @@ function renderShortcutRuntimeState(status: PopupStatusResponse | null, tabSuppo
 }
 
 // =============================================================================
-// Popup status rendering
+// Popup status rendering helpers
 // =============================================================================
 
-function renderUnsupportedState(): void {
+function renderUnsupportedStatusCopy(): void {
   setText("site-status", "Unsupported page");
   setText("enabled-status", "N/A");
   setText("panel-status", "N/A");
@@ -537,11 +537,10 @@ function renderUnsupportedState(): void {
   );
   setTipText("Go to a YouTube video page, then reopen the popup to launch LoopLock.");
   setBadgeState("Unsupported", "error");
-  applyThemeState(currentThemeMode);
   setOpenButtonState(null, false);
 }
 
-function renderUnavailableState(): void {
+function renderUnavailableStatusCopy(): void {
   setText("site-status", "YouTube detected");
   setText("enabled-status", "Unavailable");
   setText("panel-status", "Unavailable");
@@ -552,42 +551,30 @@ function renderUnavailableState(): void {
   );
   setTipText("Try reopening the popup or refreshing the page if the status stays unavailable.");
   setBadgeState("Ready", "inactive");
-  applyThemeState(currentThemeMode);
   setOpenButtonState(null, true);
 }
 
-function renderSupportedState(status: PopupStatusResponse): void {
-  applyThemeState(status.themeMode);
+function renderActiveStatusCopy(status: PopupStatusResponse): void {
+  setBadgeState("Active", "active");
+  setHeroCopy(
+    "LoopLock is active on this tab.",
+    status.mediaDetected
+      ? "Use the floating panel to set A/B points, loop playback, or exit with ✕."
+      : "LoopLock is open, but media has not been detected yet on this page."
+  );
+  setTipText("Tip: drag the panel to your preferred spot — its position now stays saved.");
+}
 
-  setText("site-status", status.supported ? "YouTube detected" : "Unsupported page");
-  setText("enabled-status", status.looplockEnabled ? "Enabled" : "Disabled");
-  setText("panel-status", status.panelVisible ? "Visible" : "Hidden");
-  setText("media-status", status.mediaDetected ? "Detected" : "Not detected");
+function renderEnabledHiddenStatusCopy(): void {
+  setBadgeState("Enabled", "inactive");
+  setHeroCopy(
+    "LoopLock is enabled, but the panel is hidden.",
+    "Use the button below to show the floating panel again on this video page."
+  );
+  setTipText("Your loop session remains available until you exit from the floating panel.");
+}
 
-  setOpenButtonState(status, true);
-
-  if (status.looplockEnabled && status.panelVisible) {
-    setBadgeState("Active", "active");
-    setHeroCopy(
-      "LoopLock is active on this tab.",
-      status.mediaDetected
-        ? "Use the floating panel to set A/B points, loop playback, or exit with ✕."
-        : "LoopLock is open, but media has not been detected yet on this page."
-    );
-    setTipText("Tip: drag the panel to your preferred spot — its position now stays saved.");
-    return;
-  }
-
-  if (status.looplockEnabled && !status.panelVisible) {
-    setBadgeState("Enabled", "inactive");
-    setHeroCopy(
-      "LoopLock is enabled, but the panel is hidden.",
-      "Use the button below to show the floating panel again on this video page."
-    );
-    setTipText("Your loop session remains available until you exit from the floating panel.");
-    return;
-  }
-
+function renderReadyStatusCopy(status: PopupStatusResponse): void {
   setBadgeState("Ready", "inactive");
   setHeroCopy(
     "This page is ready for LoopLock.",
@@ -596,6 +583,45 @@ function renderSupportedState(status: PopupStatusResponse): void {
       : "Open LoopLock now, and media detection will continue as the page finishes loading."
   );
   setTipText("LoopLock starts only when you choose to open it from the popup.");
+}
+
+function renderSupportedStatusFields(status: PopupStatusResponse): void {
+  setText("site-status", status.supported ? "YouTube detected" : "Unsupported page");
+  setText("enabled-status", status.looplockEnabled ? "Enabled" : "Disabled");
+  setText("panel-status", status.panelVisible ? "Visible" : "Hidden");
+  setText("media-status", status.mediaDetected ? "Detected" : "Not detected");
+  setOpenButtonState(status, true);
+}
+
+// =============================================================================
+// Popup status rendering
+// =============================================================================
+
+function renderUnsupportedState(): void {
+  applyThemeState(currentThemeMode);
+  renderUnsupportedStatusCopy();
+}
+
+function renderUnavailableState(): void {
+  applyThemeState(currentThemeMode);
+  renderUnavailableStatusCopy();
+}
+
+function renderSupportedState(status: PopupStatusResponse): void {
+  applyThemeState(status.themeMode);
+  renderSupportedStatusFields(status);
+
+  if (status.looplockEnabled && status.panelVisible) {
+    renderActiveStatusCopy(status);
+    return;
+  }
+
+  if (status.looplockEnabled && !status.panelVisible) {
+    renderEnabledHiddenStatusCopy();
+    return;
+  }
+
+  renderReadyStatusCopy(status);
 }
 
 function renderStatus(status: PopupStatusResponse | null, tabSupported: boolean): void {
