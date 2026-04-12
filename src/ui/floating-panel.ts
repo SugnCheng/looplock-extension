@@ -45,6 +45,7 @@ export class FloatingPanel {
 
   private hasInitializedPosition = false;
   private themeMode: ThemeMode = "dark";
+  private hasPlayedEntrance = false;
 
   constructor(initialState: PanelState, handlers: PanelHandlers) {
     this.state = initialState;
@@ -366,6 +367,17 @@ export class FloatingPanel {
     }
   }
 
+  private playEntranceIfNeeded(): void {
+    if (this.hasPlayedEntrance) return;
+
+    this.hasPlayedEntrance = true;
+    this.panelEl.classList.remove("looplock-panel-enter");
+
+    requestAnimationFrame(() => {
+      this.panelEl.classList.add("looplock-panel-enter");
+    });
+  }
+
   private render(): void {
     const {
       mediaDetected,
@@ -432,5 +444,7 @@ export class FloatingPanel {
         this.helperEl.textContent = "Ready to loop.";
       }
     }
+
+    this.playEntranceIfNeeded();
   }
 }

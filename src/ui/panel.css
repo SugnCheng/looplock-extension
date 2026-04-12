@@ -91,6 +91,10 @@
   width: 208px;
 }
 
+.looplock-panel.looplock-panel-enter {
+  animation: looplockPanelEnter 0.18s ease-out;
+}
+
 .looplock-header {
   display: flex;
   justify-content: space-between;
@@ -323,6 +327,17 @@
   from {
     opacity: 0;
     transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes looplockPanelEnter {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
   }
   to {
     opacity: 1;
